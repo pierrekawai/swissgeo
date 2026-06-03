@@ -1,0 +1,1235 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SwissGeo 🇨🇭</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#d32f2f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="SwissGeo">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,-apple-system,sans-serif;background:#f5f5f5;color:#222;min-height:100vh}
+header{background:#d32f2f;color:#fff;padding:12px 16px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,.2)}
+header h1{flex:1;font-size:1.1rem;font-weight:700}
+.btn-lang{background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.5);color:#fff;padding:4px 10px;border-radius:20px;cursor:pointer;font-size:.8rem;font-weight:600}
+.btn-lang:hover{background:rgba(255,255,255,.35)}
+.fav-counter{display:flex;align-items:center;gap:4px;font-size:.85rem;cursor:pointer}
+.btn-back{background:rgba(255,255,255,.2);border:none;color:#fff;padding:6px 12px;border-radius:20px;cursor:pointer;font-size:.85rem;display:none}
+.btn-back.visible{display:block}
+.screen{display:none;min-height:calc(100vh - 56px)}
+.screen.active{display:block}
+/* HOME */
+#screen-home{flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:40px 20px;background:linear-gradient(135deg,#fff 0%,#fce4e4 100%)}
+.screen.active#screen-home{display:flex}
+.swiss-flag{font-size:5rem;margin-bottom:16px}
+.home-title{font-size:2rem;font-weight:800;color:#d32f2f;margin-bottom:4px}
+.home-subtitle{font-size:1.1rem;color:#555;margin-bottom:8px}
+.home-zh{font-size:1.4rem;color:#888;margin-bottom:32px}
+.btn-start{background:#d32f2f;color:#fff;border:none;padding:14px 40px;border-radius:30px;font-size:1.1rem;font-weight:700;cursor:pointer;box-shadow:0 4px 16px rgba(211,47,47,.4);transition:transform .15s}
+.btn-start:hover{transform:scale(1.05)}
+/* MAP */
+#screen-map{padding:16px}
+.map-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px}
+.progress-badge{background:#d32f2f;color:#fff;padding:4px 12px;border-radius:20px;font-size:.85rem;font-weight:600}
+.region-filters{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.region-btn{padding:6px 14px;border-radius:20px;border:2px solid transparent;cursor:pointer;font-size:.8rem;font-weight:600;transition:.15s}
+.region-btn.active{color:#fff}
+.region-btn[data-region="all"]{background:#eee;color:#333;border-color:#ccc}
+.region-btn[data-region="all"].active{background:#555;color:#fff;border-color:#555}
+.region-btn[data-region="fr"]{background:#fce4e4;color:#b71c1c;border-color:#e63946}
+.region-btn[data-region="fr"].active{background:#e63946;color:#fff}
+.region-btn[data-region="de"]{background:#e3f2fd;color:#0d47a1;border-color:#1976d2}
+.region-btn[data-region="de"].active{background:#1976d2;color:#fff}
+.region-btn[data-region="it"]{background:#e8f5e9;color:#1b5e20;border-color:#388e3c}
+.region-btn[data-region="it"].active{background:#388e3c;color:#fff}
+.region-btn[data-region="rm"]{background:#fff3e0;color:#e65100;border-color:#f57c00}
+.region-btn[data-region="rm"].active{background:#f57c00;color:#fff}
+.map-container{background:#fff;border-radius:12px;box-shadow:0 2px 12px rgba(0,0,0,.1);overflow:hidden;max-width:640px;margin:0 auto}
+svg#map{width:100%;height:auto;display:block}
+.canton-circle{cursor:pointer;transition:opacity .15s,transform .15s;transform-origin:center}
+.canton-circle:hover{opacity:.8}
+.canton-circle.dimmed{opacity:.15}
+.canton-label{pointer-events:none;font-size:9px;font-weight:700;fill:#fff;text-anchor:middle;dominant-baseline:central}
+.tooltip{position:fixed;background:rgba(0,0,0,.85);color:#fff;padding:6px 12px;border-radius:8px;font-size:.85rem;pointer-events:none;z-index:200;display:none;white-space:nowrap}
+/* DETAIL */
+#screen-detail{padding:16px;max-width:700px;margin:0 auto}
+.detail-card{background:#fff;border-radius:16px;box-shadow:0 2px 16px rgba(0,0,0,.1);overflow:hidden;margin-bottom:16px}
+.detail-hero{padding:24px 20px 16px;display:flex;align-items:center;gap:16px}
+.detail-emoji{font-size:3rem}
+.detail-names h2{font-size:1.6rem;font-weight:800;color:#d32f2f}
+.detail-names .zh-name{font-size:1.1rem;color:#666}
+.detail-names .canton-id{font-size:.8rem;background:#f5f5f5;color:#888;padding:2px 8px;border-radius:10px;display:inline-block;margin-top:4px}
+.detail-fav{margin-left:auto;font-size:1.8rem;cursor:pointer;transition:transform .15s}
+.detail-fav:hover{transform:scale(1.2)}
+.region-tag{display:inline-block;padding:4px 12px;border-radius:12px;font-size:.8rem;font-weight:600;color:#fff;margin:0 20px 16px}
+.detail-section{padding:16px 20px;border-top:1px solid #f0f0f0}
+.detail-section h3{font-size:.9rem;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px}
+.detail-section p{font-size:.95rem;line-height:1.6;color:#333}
+.items-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:8px}
+.item-card{background:#f9f9f9;border-radius:10px;padding:10px 12px}
+.item-card .item-name{font-weight:700;font-size:.9rem;color:#333}
+.item-card .item-zh{font-size:.8rem;color:#888;margin-bottom:4px}
+.item-card .item-desc{font-size:.82rem;color:#555;line-height:1.4}
+.fun-fact{background:linear-gradient(135deg,#fff9c4,#fff3e0);border-left:4px solid #ffc107;padding:12px 16px;border-radius:0 8px 8px 0;margin:0 20px 16px;font-size:.9rem;line-height:1.5;color:#555}
+/* GLOSSARY */
+#screen-glossary{padding:16px;max-width:700px;margin:0 auto}
+.search-bar{width:100%;padding:10px 16px;border:2px solid #ddd;border-radius:30px;font-size:.95rem;margin-bottom:16px;outline:none}
+.search-bar:focus{border-color:#d32f2f}
+.glossary-item{background:#fff;border-radius:10px;padding:12px 16px;margin-bottom:8px;box-shadow:0 1px 4px rgba(0,0,0,.07)}
+.glossary-item .gterm{font-weight:700;font-size:1rem;color:#d32f2f}
+.glossary-item .gterm-zh{font-size:.9rem;color:#555;margin-left:8px}
+.glossary-item .gdef{font-size:.85rem;color:#666;margin-top:4px;line-height:1.4}
+/* REGIONS */
+#screen-regions{padding:16px;max-width:700px;margin:0 auto}
+.region-card{border-radius:16px;padding:20px;margin-bottom:16px;color:#fff}
+.region-card h2{font-size:1.3rem;font-weight:800;margin-bottom:6px}
+.region-card .rc-zh{font-size:1rem;opacity:.85;margin-bottom:10px}
+.region-card p{font-size:.9rem;line-height:1.5;opacity:.9}
+.region-card .canton-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+.region-card .canton-chip{background:rgba(255,255,255,.25);padding:3px 10px;border-radius:12px;font-size:.8rem;font-weight:600}
+/* NAV BAR */
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid #eee;display:flex;z-index:100;box-shadow:0 -2px 8px rgba(0,0,0,.08)}
+.nav-btn{flex:1;padding:10px 4px 8px;border:none;background:none;cursor:pointer;font-size:.65rem;color:#888;display:flex;flex-direction:column;align-items:center;gap:2px;transition:.15s}
+.nav-btn .nav-icon{font-size:1.3rem}
+.nav-btn.active{color:#d32f2f}
+.screen{padding-bottom:70px}
+@media(max-width:480px){
+  .items-grid{grid-template-columns:1fr 1fr}
+  .detail-hero{padding:16px}
+}
+.fade-in{animation:fadeIn .2s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+</style>
+</head>
+<body>
+<header>
+  <button class="btn-back" id="btn-back" onclick="goBack()">← <span data-i="back">Retour</span></button>
+  <h1>SwissGeo 🇨🇭</h1>
+  <div class="fav-counter" onclick="showScreen('glossary')" title="Glossaire">📖</div>
+  <div class="fav-counter" id="fav-display" onclick="showScreen('favorites')">❤️ <span id="fav-count">0</span></div>
+  <button class="btn-lang" onclick="toggleLang()">FR | 中文</button>
+</header>
+
+<div class="tooltip" id="tooltip"></div>
+
+<!-- HOME -->
+<div class="screen active" id="screen-home">
+  <div class="swiss-flag">🇨🇭</div>
+  <div class="home-title">SwissGeo</div>
+  <div class="home-subtitle">Découvrir les 26 cantons suisses</div>
+  <div class="home-zh">探索瑞士26個州</div>
+  <button class="btn-start" onclick="showScreen('map')">
+    <span data-i="start_fr">Commencer</span> / <span data-i="start_zh">開始</span>
+  </button>
+  <div style="margin-top:24px;color:#999;font-size:.85rem" data-i="home_hint">Touchez la carte pour explorer • 點擊地圖探索</div>
+</div>
+
+<!-- MAP -->
+<div class="screen" id="screen-map">
+  <div class="map-header">
+    <div>
+      <div style="font-weight:700;font-size:1.1rem" data-i="map_title">Carte des cantons</div>
+      <div style="font-size:.8rem;color:#888" data-i="map_sub">Touchez un canton pour en savoir plus</div>
+    </div>
+    <div class="progress-badge"><span id="visited-count">0</span>/26 <span data-i="visited">visités</span></div>
+  </div>
+  <div class="region-filters" id="region-filters">
+    <button class="region-btn active" data-region="all" onclick="filterRegion('all')">Tous / 全部</button>
+    <button class="region-btn" data-region="fr" onclick="filterRegion('fr')">Romandie 🔴</button>
+    <button class="region-btn" data-region="de" onclick="filterRegion('de')">Alémanique 🔵</button>
+    <button class="region-btn" data-region="it" onclick="filterRegion('it')">Tessin 🟢</button>
+    <button class="region-btn" data-region="rm" onclick="filterRegion('rm')">Romanche 🟠</button>
+  </div>
+  <div class="map-container">
+    <svg id="map" viewBox="0 0 600 400" xmlns="http://www.w3.org/2000/svg"></svg>
+  </div>
+  <div style="text-align:center;margin-top:12px">
+    <button onclick="showScreen('regions')" style="background:#fff;border:2px solid #d32f2f;color:#d32f2f;padding:8px 20px;border-radius:20px;cursor:pointer;font-weight:600;font-size:.85rem" data-i="explore_regions">Explorer les régions linguistiques</button>
+  </div>
+</div>
+
+<!-- DETAIL -->
+<div class="screen" id="screen-detail">
+  <div id="detail-content"></div>
+</div>
+
+<!-- GLOSSARY -->
+<div class="screen" id="screen-glossary">
+  <h2 style="margin-bottom:12px;color:#d32f2f" data-i="glossary_title">Glossaire / 詞彙表</h2>
+  <input class="search-bar" id="glossary-search" placeholder="Rechercher... / 搜尋..." oninput="renderGlossary()">
+  <div id="glossary-list"></div>
+</div>
+
+<!-- REGIONS -->
+<div class="screen" id="screen-regions">
+  <h2 style="margin-bottom:16px;color:#d32f2f" data-i="regions_title">Régions linguistiques / 語言區域</h2>
+  <div id="regions-content"></div>
+</div>
+
+<!-- BOTTOM NAV -->
+<nav class="bottom-nav">
+  <button class="nav-btn active" id="nav-home" onclick="showScreen('home')"><span class="nav-icon">🏠</span><span data-i="nav_home">Accueil</span></button>
+  <button class="nav-btn" id="nav-map" onclick="showScreen('map')"><span class="nav-icon">🗺️</span><span data-i="nav_map">Carte</span></button>
+  <button class="nav-btn" id="nav-regions" onclick="showScreen('regions')"><span class="nav-icon">🌍</span><span data-i="nav_regions">Régions</span></button>
+  <button class="nav-btn" id="nav-glossary" onclick="showScreen('glossary')"><span class="nav-icon">📖</span><span data-i="nav_glossary">Glossaire</span></button>
+</nav>
+
+<script>
+let lang = 'fr';
+let visited = new Set(JSON.parse(localStorage.getItem('swissgeo_visited') || '[]'));
+let favs = new Set(JSON.parse(localStorage.getItem('swissgeo_favs') || '[]'));
+let currentScreen = 'home';
+let activeRegion = 'all';
+
+const i18n = {
+  back: {fr:'Retour', zh:'返回'},
+  start_fr: {fr:'Commencer', zh:'開始'},
+  start_zh: {fr:'Commencer', zh:'開始'},
+  home_hint: {fr:'Touchez la carte pour explorer', zh:'點擊地圖探索'},
+  map_title: {fr:'Carte des cantons', zh:'州地圖'},
+  map_sub: {fr:'Touchez un canton pour en savoir plus', zh:'點擊州以了解更多'},
+  visited: {fr:'visités', zh:'已訪問'},
+  explore_regions: {fr:'Explorer les régions linguistiques', zh:'探索語言區域'},
+  glossary_title: {fr:'Glossaire', zh:'詞彙表'},
+  regions_title: {fr:'Régions linguistiques', zh:'語言區域'},
+  nav_home: {fr:'Accueil', zh:'首頁'},
+  nav_map: {fr:'Carte', zh:'地圖'},
+  nav_regions: {fr:'Régions', zh:'區域'},
+  nav_glossary: {fr:'Glossaire', zh:'詞彙表'},
+  food: {fr:'Spécialités culinaires', zh:'美食特產'},
+  tourism: {fr:'Sites touristiques', zh:'旅遊景點'},
+  sports: {fr:'Sports & Loisirs', zh:'運動休閒'},
+  history: {fr:'Histoire', zh:'歷史'},
+  water: {fr:'Lacs & Rivières', zh:'湖泊與河流'},
+  funfact: {fr:'Le saviez-vous ?', zh:'你知道嗎？'},
+  capital: {fr:'Capitale', zh:'首府'},
+  language: {fr:'Langue(s)', zh:'語言'},
+  add_fav: {fr:'Ajouter aux favoris', zh:'加入收藏'},
+  rem_fav: {fr:'Retirer des favoris', zh:'移除收藏'},
+};
+
+const cantons = [
+  {id:'GE',region:'fr',emoji:'🌊',
+   name:{fr:'Genève',zh:'日內瓦州'},
+   capital:{fr:'Genève',zh:'日內瓦'},
+   language:{fr:'Français',zh:'法語'},
+   food:[
+     {name:{fr:'Longeole',zh:'日內瓦香腸'},desc:{fr:'Saucisse genevoise fumée aux herbes',zh:'煙燻草本日內瓦香腸'}},
+     {name:{fr:'Cardons à la genevoise',zh:'烤薊菜'},desc:{fr:'Cardon au gratin, légume typique',zh:'烤薊菜，典型蔬菜料理'}},
+     {name:{fr:'Malakoff',zh:'炸乳酪球'},desc:{fr:'Beignet au fromage frit doré',zh:'金黃色炸乳酪球'}}
+   ],
+   tourism:[
+     {name:{fr:'Jet d\'eau',zh:'日內瓦大噴泉'},desc:{fr:'Fontaine célèbre de 140m',zh:'140公尺高的著名噴泉'}},
+     {name:{fr:'Vieille-Ville',zh:'歷史舊城'},desc:{fr:'Quartier historique médiéval',zh:'中世紀歷史街區'}},
+     {name:{fr:'CERN',zh:'歐洲核子研究中心'},desc:{fr:'Laboratoire de physique mondial',zh:'全球頂尖物理研究實驗室'}}
+   ],
+   sports:[
+     {name:{fr:'Aviron',zh:'划船'},desc:{fr:'Sur le lac Léman',zh:'在萊芒湖划船'}},
+     {name:{fr:'Escalade',zh:'傳統節日競跑'},desc:{fr:'Fête et course traditionnelle',zh:'日內瓦傳統節日競跑活動'}}
+   ],
+   history:{fr:'Genève fut un centre de la Réforme protestante au XVIe siècle avec Jean Calvin. Elle est aujourd\'hui siège de nombreuses organisations internationales comme l\'ONU et la Croix-Rouge.',zh:'日內瓦是16世紀宗教改革中心，約翰·喀爾文在此傳道。今日是聯合國歐洲總部及紅十字國際委員會所在地。'},
+   water:{fr:'Lac Léman, Rhône, Arve',zh:'萊芒湖、隆河、阿爾夫河'},
+   funFact:{fr:'Le Jet d\'eau propulse l\'eau à 140 km/h jusqu\'à 140 mètres de hauteur',zh:'日內瓦大噴泉將水柱噴射至140公尺高，時速達140公里'}},
+
+  {id:'VD',region:'fr',emoji:'🍷',
+   name:{fr:'Vaud',zh:'沃州'},
+   capital:{fr:'Lausanne',zh:'洛桑'},
+   language:{fr:'Français',zh:'法語'},
+   food:[
+     {name:{fr:'Papet vaudois',zh:'韭蔥香腸鍋'},desc:{fr:'Poireaux avec saucisson vaudois',zh:'韭蔥搭配沃州香腸'}},
+     {name:{fr:'Meringues à la crème double',zh:'蛋白霜奶油'},desc:{fr:'Meringue avec crème épaisse',zh:'蛋白霜配濃厚鮮奶油'}},
+     {name:{fr:'Fondue',zh:'乳酪火鍋'},desc:{fr:'Fromage fondu traditionnel',zh:'傳統融化乳酪料理'}}
+   ],
+   tourism:[
+     {name:{fr:'Cathédrale de Lausanne',zh:'洛桑大教堂'},desc:{fr:'Cathédrale gothique du XIIe siècle',zh:'12世紀哥德式大教堂'}},
+     {name:{fr:'Lavaux',zh:'拉沃葡萄園'},desc:{fr:'Vignobles en terrasses UNESCO',zh:'UNESCO葡萄園梯田'}},
+     {name:{fr:'Château de Chillon',zh:'西庸城堡'},desc:{fr:'Château médiéval sur le lac',zh:'湖畔中世紀城堡'}}
+   ],
+   sports:[
+     {name:{fr:'Ski alpin',zh:'高山滑雪'},desc:{fr:'Villars, Les Diablerets',zh:'維拉爾、惡魔山滑雪場'}},
+     {name:{fr:'Aviron',zh:'划船'},desc:{fr:'Sur le lac Léman',zh:'萊芒湖划船'}}
+   ],
+   history:{fr:'Vaud fut longtemps sous domination bernoise avant de devenir canton indépendant en 1803. Lausanne abrite le Tribunal fédéral et le Comité International Olympique.',zh:'沃州長期受伯恩統治，1803年成為獨立州。洛桑是聯邦法院及國際奧林匹克委員會所在地。'},
+   water:{fr:'Lac Léman, Lac de Joux, Venoge, Orbe',zh:'萊芒湖、茹湖、沃諾日河'},
+   funFact:{fr:'Les vignobles de Lavaux sont classés au patrimoine mondial UNESCO depuis 2007',zh:'拉沃葡萄園梯田自2007年起被列入UNESCO世界遺產'}},
+
+  {id:'NE',region:'fr',emoji:'⌚',
+   name:{fr:'Neuchâtel',zh:'納沙泰爾州'},
+   capital:{fr:'Neuchâtel',zh:'納沙泰爾'},
+   language:{fr:'Français',zh:'法語'},
+   food:[
+     {name:{fr:'Fondue neuchâteloise',zh:'納沙泰爾乳酪鍋'},desc:{fr:'Fondue au vin blanc local',zh:'白酒乳酪鍋'}},
+     {name:{fr:'Tripes à la neuchâteloise',zh:'燉牛肚'},desc:{fr:'Tripes mijotées lentement',zh:'慢燉牛肚料理'}},
+     {name:{fr:'Taillé aux greubons',zh:'豬油塔'},desc:{fr:'Tarte salée au saindoux',zh:'豬油鹹塔'}}
+   ],
+   tourism:[
+     {name:{fr:'Vieille ville de Neuchâtel',zh:'中世紀古城'},desc:{fr:'Ville médiévale sur le lac',zh:'湖畔中世紀古城'}},
+     {name:{fr:'Lac de Neuchâtel',zh:'納沙泰爾湖'},desc:{fr:'Plus grand lac entièrement suisse',zh:'瑞士境內最大湖泊'}},
+     {name:{fr:'La Chaux-de-Fonds',zh:'拉紹德封'},desc:{fr:'Ville horlogère UNESCO',zh:'UNESCO鐘錶業城市'}}
+   ],
+   sports:[
+     {name:{fr:'Ski',zh:'滑雪'},desc:{fr:'Val-de-Ruz et Chasseral',zh:'瓦勒德呂滑雪場'}},
+     {name:{fr:'Voile',zh:'帆船'},desc:{fr:'Sur le lac de Neuchâtel',zh:'湖上帆船運動'}}
+   ],
+   history:{fr:'Neuchâtel fut une principauté sous domination prussienne jusqu\'en 1848. La région est berceau de l\'industrie horlogère suisse, notamment à La Chaux-de-Fonds.',zh:'納沙泰爾曾是普魯士統治下的公國，直至1848年。該地區是瑞士鐘錶業的搖籃，尤其是拉紹德封市。'},
+   water:{fr:'Lac de Neuchâtel, Lac de Bienne, Areuse',zh:'納沙泰爾湖、比爾湖、阿勒斯河'},
+   funFact:{fr:'La Chaux-de-Fonds et Le Locle sont classés UNESCO pour leur urbanisme horloger unique',zh:'拉紹德封和勒洛克因獨特的鐘錶業城市規劃被列入UNESCO遺產'}},
+
+  {id:'JU',region:'fr',emoji:'🐄',
+   name:{fr:'Jura',zh:'汝拉州'},
+   capital:{fr:'Delémont',zh:'德萊蒙'},
+   language:{fr:'Français',zh:'法語'},
+   food:[
+     {name:{fr:'Damassine',zh:'李子白蘭地'},desc:{fr:'Eau-de-vie de prune locale',zh:'汝拉本地李子白蘭地'}},
+     {name:{fr:'Boutefas',zh:'大型煙燻香腸'},desc:{fr:'Gros saucisson fumé traditionnel',zh:'傳統大型煙燻香腸'}},
+     {name:{fr:'Moutarde de Bénichon',zh:'甜芥末'},desc:{fr:'Moutarde douce sucrée',zh:'甜味傳統芥末'}}
+   ],
+   tourism:[
+     {name:{fr:'Franches-Montagnes',zh:'法蘭什山地'},desc:{fr:'Plateau verdoyant et chevaux',zh:'綠色高原與馬匹'}},
+     {name:{fr:'Ajoie',zh:'阿若瓦平原'},desc:{fr:'Plaine agricole fertile',zh:'肥沃農業平原'}},
+     {name:{fr:'Parc naturel du Doubs',zh:'杜河自然公園'},desc:{fr:'Nature sauvage préservée',zh:'野生自然保護公園'}}
+   ],
+   sports:[
+     {name:{fr:'Randonnée',zh:'健行'},desc:{fr:'Sentiers du Jura',zh:'汝拉山步道健行'}},
+     {name:{fr:'Cyclotourisme',zh:'山地自行車'},desc:{fr:'Vélo dans le Jura jurassien',zh:'汝拉山地自行車遊'}}
+   ],
+   history:{fr:'Le Jura est le plus jeune canton suisse, créé en 1979 après un long mouvement séparatiste. Il s\'est séparé du canton de Berne suite à des tensions linguistiques et culturelles.',zh:'汝拉州是瑞士最年輕的州，1979年經過長期分離運動後建立，從伯恩州分離出來，源於語言和文化衝突。'},
+   water:{fr:'Doubs, Sorne, Birse',zh:'杜河、索恩河、比爾斯河'},
+   funFact:{fr:'Le Jura est le seul canton créé par votation populaire en 1978',zh:'汝拉州是唯一通過全民投票（1978年）創立的瑞士州'}},
+
+  {id:'FR',region:'fr',emoji:'🧀',
+   name:{fr:'Fribourg',zh:'弗里堡州'},
+   capital:{fr:'Fribourg',zh:'弗里堡'},
+   language:{fr:'Français et Allemand',zh:'法語及德語'},
+   food:[
+     {name:{fr:'Fondue au Vacherin',zh:'瓦什蘭乳酪鍋'},desc:{fr:'Fondue fribourgeoise au vacherin',zh:'弗里堡瓦什蘭乳酪火鍋'}},
+     {name:{fr:'Gruyère AOP',zh:'格呂耶爾乳酪'},desc:{fr:'Fromage emblématique de la région',zh:'弗里堡地區標誌性乳酪'}},
+     {name:{fr:'Cuchaule',zh:'藏紅花麵包'},desc:{fr:'Brioche dorée au safran',zh:'金黃色藏紅花發酵麵包'}}
+   ],
+   tourism:[
+     {name:{fr:'Vieille-Ville de Fribourg',zh:'弗里堡舊城'},desc:{fr:'Ville médiévale sur la Sarine',zh:'薩林河畔中世紀古城'}},
+     {name:{fr:'Château de Gruyères',zh:'格呂耶爾城堡'},desc:{fr:'Château fort médiéval',zh:'中世紀城堡'}},
+     {name:{fr:'Moléson',zh:'莫雷松山'},desc:{fr:'Montagne panoramique',zh:'全景山頂'}}
+   ],
+   sports:[
+     {name:{fr:'Hockey sur glace',zh:'冰球'},desc:{fr:'HC Fribourg-Gottéron',zh:'弗里堡戈特龍冰球隊'}},
+     {name:{fr:'Ski à Charmey',zh:'夏梅滑雪'},desc:{fr:'Station familiale',zh:'家庭滑雪度假村'}}
+   ],
+   history:{fr:'Fribourg fut fondée en 1157 et resta longtemps une ville de frontière linguistique entre le monde roman et germanique. La ville abrite une université bilingue fondée en 1889.',zh:'弗里堡建於1157年，長期是法語和德語世界的語言邊界城市。大學建於1889年，採雙語教學。'},
+   water:{fr:'Lac de la Gruyère, Sarine, Lac de Morat',zh:'格呂耶爾湖、薩林河、穆爾滕湖'},
+   funFact:{fr:'Le Gruyère AOP est produit depuis plus de 900 ans dans la région de Fribourg',zh:'格呂耶爾乳酪在弗里堡地區已生產超過900年'}},
+
+  {id:'VS',region:'fr',emoji:'🏔️',
+   name:{fr:'Valais',zh:'瓦萊州'},
+   capital:{fr:'Sion',zh:'錫永'},
+   language:{fr:'Français et Allemand',zh:'法語及德語'},
+   food:[
+     {name:{fr:'Raclette valaisanne',zh:'瓦萊拉克萊特'},desc:{fr:'Fromage fondu au feu de bois',zh:'木火烤融瓦萊乳酪'}},
+     {name:{fr:'Viande séchée du Valais',zh:'風乾牛肉'},desc:{fr:'Bœuf séché en altitude',zh:'高山風乾牛肉'}},
+     {name:{fr:'Asperges du Valais',zh:'白蘆筍'},desc:{fr:'Asperges blanches primeur',zh:'珍貴白蘆筍'}}
+   ],
+   tourism:[
+     {name:{fr:'Zermatt & Cervin',zh:'澤馬特與馬特洪峰'},desc:{fr:'Village alpin et sommet emblématique',zh:'阿爾卑斯山村與標誌性山峰'}},
+     {name:{fr:'Verbier',zh:'韋爾比耶'},desc:{fr:'Station de ski de renommée mondiale',zh:'世界著名滑雪勝地'}},
+     {name:{fr:'Château de Tourbillon',zh:'圖比永城堡'},desc:{fr:'Ruines médiévales panoramiques',zh:'全景中世紀廢墟'}}
+   ],
+   sports:[
+     {name:{fr:'Ski alpin',zh:'高山滑雪'},desc:{fr:'Zermatt, Verbier, Crans-Montana',zh:'澤馬特、韋爾比耶、克朗斯-蒙大拿'}},
+     {name:{fr:'Haute Route',zh:'高山徒步'},desc:{fr:'Randonnée alpine légendaire',zh:'傳奇高山徒步路線'}}
+   ],
+   history:{fr:'Le Valais fut longtemps divisé entre la partie germanophone (Haut-Valais) et francophone (Bas-Valais). C\'est là que se trouve le Cervin (4478m), symbole des Alpes suisses.',zh:'瓦萊州長期分為德語區（上瓦萊）和法語區（下瓦萊）。這裡有馬特洪峰（4478公尺），是瑞士阿爾卑斯山的象徵。'},
+   water:{fr:'Lac Léman (partie), Rhône, Lac de Derborence',zh:'萊芒湖（部分）、隆河、德博朗斯湖'},
+   funFact:{fr:'La Grande Dixence est le plus haut barrage-poids du monde avec 285 mètres',zh:'大迪克桑斯大壩高285公尺，是世界最高的重力壩'}},
+
+  {id:'ZH',region:'de',emoji:'🏙️',
+   name:{fr:'Zürich',zh:'蘇黎世州'},
+   capital:{fr:'Zürich',zh:'蘇黎世'},
+   language:{fr:'Allemand (Zürichdeutsch)',zh:'德語（蘇黎世方言）'},
+   food:[
+     {name:{fr:'Zürcher Geschnetzeltes',zh:'奶油小牛肉片'},desc:{fr:'Émincé de veau à la crème',zh:'奶油燴小牛肉薄片'}},
+     {name:{fr:'Tirggel',zh:'蜂蜜薄餅'},desc:{fr:'Biscuits au miel en relief',zh:'浮雕蜂蜜薄餅乾'}},
+     {name:{fr:'Rösti',zh:'薯餅'},desc:{fr:'Galette de pommes de terre grillée',zh:'煎馬鈴薯餅'}}
+   ],
+   tourism:[
+     {name:{fr:'Vieille ville',zh:'蘇黎世舊城'},desc:{fr:'Centre historique animé',zh:'熱鬧的歷史城區'}},
+     {name:{fr:'Kunsthaus Zürich',zh:'蘇黎世美術館'},desc:{fr:'Musée d\'art de renommée mondiale',zh:'世界知名美術館'}},
+     {name:{fr:'Lac de Zürich',zh:'蘇黎世湖'},desc:{fr:'Lac au cœur de la ville',zh:'城市中心的美麗湖泊'}}
+   ],
+   sports:[
+     {name:{fr:'FC Zürich',zh:'蘇黎世足球俱樂部'},desc:{fr:'Plus vieux club de football suisse',zh:'瑞士最古老足球俱樂部'}},
+     {name:{fr:'Sechseläuten',zh:'六點節'},desc:{fr:'Fête printanière traditionnelle',zh:'傳統春季節日慶典'}}
+   ],
+   history:{fr:'Zürich fut un centre de la Réforme protestante au XVIe siècle sous Ulrich Zwingli. Aujourd\'hui, c\'est la plus grande ville de Suisse et un centre financier mondial.',zh:'蘇黎世在16世紀是烏利希·慈運理領導的宗教改革中心。今日是瑞士最大城市及全球金融中心。'},
+   water:{fr:'Lac de Zürich, Limmat, Glatt',zh:'蘇黎世湖、林馬特河、格拉特河'},
+   funFact:{fr:'Zürich est régulièrement classée parmi les villes avec la meilleure qualité de vie au monde',zh:'蘇黎世長期被評為全球生活質量最高的城市之一'}},
+
+  {id:'BE',region:'de',emoji:'🐻',
+   name:{fr:'Bern',zh:'伯恩州'},
+   capital:{fr:'Bern',zh:'伯恩'},
+   language:{fr:'Allemand et Français',zh:'德語及法語'},
+   food:[
+     {name:{fr:'Bernerplatte',zh:'酸菜肉拼盤'},desc:{fr:'Choucroute avec viandes variées',zh:'多種肉類與酸菜拼盤'}},
+     {name:{fr:'Meringues de Meiringen',zh:'蛋白霜餅'},desc:{fr:'Meringues légères et croustillantes',zh:'輕盈酥脆蛋白霜餅'}},
+     {name:{fr:'Läckerli bernois',zh:'伯恩香料餅'},desc:{fr:'Pain d\'épices aux amandes',zh:'杏仁香料薑餅'}}
+   ],
+   tourism:[
+     {name:{fr:'Vieille-Ville UNESCO',zh:'UNESCO舊城'},desc:{fr:'Arcades médiévales remarquables',zh:'著名中世紀拱廊舊城'}},
+     {name:{fr:'Musée des ours',zh:'熊公園'},desc:{fr:'L\'ours, symbole de Berne',zh:'伯恩象徵熊的公園'}},
+     {name:{fr:'Jungfraujoch',zh:'少女峰頂'},desc:{fr:'Sommet alpin spectaculaire',zh:'壯觀的阿爾卑斯山頂'}}
+   ],
+   sports:[
+     {name:{fr:'Ski Oberland bernois',zh:'伯恩高地滑雪'},desc:{fr:'Grindelwald, Wengen, Mürren',zh:'格林德瓦、文根、米倫'}},
+     {name:{fr:'Schwingen',zh:'瑞士式摔跤'},desc:{fr:'Lutte traditionnelle suisse',zh:'傳統瑞士式摔跤'}}
+   ],
+   history:{fr:'Berne est la capitale fédérale de la Suisse depuis 1848. Fondée en 1191 selon la légende par le duc Berchtold V de Zähringen, son nom viendrait de l\'ours.',zh:'伯恩自1848年起是瑞士聯邦首都。根據傳說由扎林根公爵五世貝希托爾德於1191年建立，其名稱源於熊（Bär）。'},
+   water:{fr:'Lac de Thoune, Lac de Brienz, Aar',zh:'圖恩湖、布里恩茨湖、阿勒河'},
+   funFact:{fr:'La vieille ville de Berne possède 6 km d\'arcades couvertes — parmi les plus longues d\'Europe',zh:'伯恩舊城擁有6公里長的有蓋拱廊，是歐洲最長的之一'}},
+
+  {id:'LU',region:'de',emoji:'🌉',
+   name:{fr:'Luzern',zh:'琉森州'},
+   capital:{fr:'Luzern',zh:'琉森'},
+   language:{fr:'Allemand',zh:'德語'},
+   food:[
+     {name:{fr:'Luzerner Chügelipastete',zh:'琉森酥皮餡餅'},desc:{fr:'Vol-au-vent lucernois traditionnel',zh:'傳統琉森酥皮肉餡餅'}},
+     {name:{fr:'Birnbrot',zh:'梨乾麵包'},desc:{fr:'Pain aux poires séchées et épices',zh:'梨乾香料麵包'}},
+     {name:{fr:'Älplermagronen',zh:'高山通心麵'},desc:{fr:'Macaroni alpin au fromage',zh:'高山乳酪通心麵'}}
+   ],
+   tourism:[
+     {name:{fr:'Kapellbrücke',zh:'卡佩爾木橋'},desc:{fr:'Pont couvert médiéval emblématique',zh:'標誌性中世紀有蓋木橋'}},
+     {name:{fr:'Mont Pilate',zh:'皮拉圖斯山'},desc:{fr:'Montagne panoramique spectaculaire',zh:'壯觀的全景山'}},
+     {name:{fr:'Lac des Quatre-Cantons',zh:'四森林州湖'},desc:{fr:'Lac historique et mythique',zh:'歷史神話湖泊'}}
+   ],
+   sports:[
+     {name:{fr:'Ski au Titlis',zh:'提特利斯滑雪'},desc:{fr:'Glacier et piste de ski',zh:'冰川滑雪勝地'}},
+     {name:{fr:'Randonnée Rigi',zh:'里吉山健行'},desc:{fr:'La reine des montagnes',zh:'山中皇后里吉山健行'}}
+   ],
+   history:{fr:'Luzerne joua un rôle central dans la fondation de la Confédération suisse. Le Lac des Quatre-Cantons est au cœur du mythe fondateur avec Guillaume Tell.',zh:'琉森在瑞士邦聯成立中扮演核心角色。四森林州湖是威廉·泰爾傳說的核心，是瑞士建國神話的發源地。'},
+   water:{fr:'Lac des Quatre-Cantons, Reuss',zh:'四森林州湖、羅伊斯河'},
+   funFact:{fr:'Le Lion de Lucerne sculpté en 1820 fut qualifié par Mark Twain de "pierre la plus triste et touchante du monde"',zh:'琉森獅子紀念碑（1820年）被馬克·吐溫稱為「世界上最悲傷感人的石雕」'}},
+
+  {id:'UR',region:'de',emoji:'🏔️',
+   name:{fr:'Uri',zh:'烏里州'},
+   capital:{fr:'Altdorf',zh:'阿爾特多夫'},
+   language:{fr:'Allemand',zh:'德語'},
+   food:[
+     {name:{fr:'Urner Bergkäse',zh:'烏里山地乳酪'},desc:{fr:'Fromage de montagne artisanal',zh:'手工山地乳酪'}},
+     {name:{fr:'Urner Lebkuchen',zh:'薑餅'},desc:{fr:'Pain d\'épices traditionnel',zh:'傳統薑餅'}},
+     {name:{fr:'Forellen',zh:'溪流鱒魚'},desc:{fr:'Truites fraîches de rivière',zh:'新鮮溪流鱒魚'}}
+   ],
+   tourism:[
+     {name:{fr:'Col du Gothard',zh:'哥達山口'},desc:{fr:'Col alpin historique stratégique',zh:'歷史戰略阿爾卑斯山口'}},
+     {name:{fr:'Prairie du Rütli',zh:'呂特利草地'},desc:{fr:'Lieu fondateur de la Suisse',zh:'瑞士建國聖地'}},
+     {name:{fr:'Statue Guillaume Tell',zh:'威廉泰爾雕像'},desc:{fr:'À Altdorf, héros national',zh:'阿爾特多夫國家英雄雕像'}}
+   ],
+   sports:[
+     {name:{fr:'Parapente',zh:'滑翔傘'},desc:{fr:'Au-dessus des Alpes uranaises',zh:'烏里阿爾卑斯山上空滑翔'}},
+     {name:{fr:'Randonnée Gothard',zh:'哥達山健行'},desc:{fr:'Sentiers alpins historiques',zh:'歷史高山步道健行'}}
+   ],
+   history:{fr:'Uri est l\'un des trois cantons fondateurs de la Confédération (avec Schwyz et Unterwald) en 1291. La prairie du Rütli, où fut signé le serment fondateur, se trouve ici.',zh:'烏里是1291年瑞士邦聯三個創始州之一（與施維茨和下瓦爾登）。簽署建國誓言的呂特利草地就位於此。'},
+   water:{fr:'Lac des Quatre-Cantons (Lac d\'Uri), Reuss',zh:'四森林州湖（烏里湖）、羅伊斯河'},
+   funFact:{fr:'Le tunnel ferroviaire du Gothard (1882) fut le plus long du monde pendant 25 ans',zh:'哥達鐵路隧道（1882年）曾是世界最長隧道，保持紀錄達25年'}},
+
+  {id:'SZ',region:'de',emoji:'🛡️',
+   name:{fr:'Schwyz',zh:'施維茨州'},
+   capital:{fr:'Schwyz',zh:'施維茨'},
+   language:{fr:'Allemand',zh:'德語'},
+   food:[
+     {name:{fr:'Schwyzer Schüblig',zh:'水煮香腸'},desc:{fr:'Saucisse bouillie traditionnelle',zh:'傳統水煮香腸'}},
+     {name:{fr:'Röteli',zh:'櫻桃利口酒'},desc:{fr:'Liqueur de cerise locale',zh:'本地櫻桃利口酒'}},
+     {name:{fr:'Schwyzer Käse',zh:'施維茨乳酪'},desc:{fr:'Fromage local de montagne',zh:'本地山地乳酪'}}
+   ],
+   tourism:[
+     {name:{fr:'Hohle Gasse',zh:'空心小路'},desc:{fr:'Chemin légendaire de Guillaume Tell',zh:'威廉泰爾傳說路徑'}},
+     {name:{fr:'Lac de Lauerz',zh:'勞爾茨湖'},desc:{fr:'Lac paisible avec île',zh:'有小島的寧靜湖泊'}},
+     {name:{fr:'Archives fédérales',zh:'聯邦檔案館'},desc:{fr:'Charte originale de 1291',zh:'1291年原始邦聯憲章'}}
+   ],
+   sports:[
+     {name:{fr:'Natation',zh:'游泳'},desc:{fr:'Dans les lacs alpins',zh:'高山湖泊游泳'}},
+     {name:{fr:'Randonnée Mythen',zh:'密滕山健行'},desc:{fr:'Panorama exceptionnel',zh:'絕佳全景健行'}}
+   ],
+   history:{fr:'Schwyz donna son nom à toute la Suisse (Schweiz). C\'est l\'un des trois cantons fondateurs de 1291. La charte originale de la Confédération y est conservée.',zh:'施維茨賦予了整個瑞士國名（Schweiz）。是1291年三個創始州之一。原始邦聯憲章保存於此。'},
+   water:{fr:'Lac de Zürich (partie), Lac de Lauerz, Muota',zh:'蘇黎世湖（部分）、勞爾茨湖、穆歐塔河'},
+   funFact:{fr:'Le nom "Suisse" (Schweiz) vient directement du canton de Schwyz',zh:'「瑞士」（Schweiz）這個名稱直接來源於施維茨州'}},
+
+  {id:'OW',region:'de',emoji:'🌿',
+   name:{fr:'Obwalden',zh:'上瓦爾登州'},
+   capital:{fr:'Sarnen',zh:'薩爾嫩'},
+   language:{fr:'Allemand',zh:'德語'},
+   food:[
+     {name:{fr:'Älplermagronen',zh:'高山通心麵'},desc:{fr:'Pâtes alpines au fromage',zh:'高山乳酪通心麵'}},
+     {name:{fr:'Käse d\'alpage',zh:'高山乳酪'},desc:{fr:'Fromage artisanal d\'alpage',zh:'手工高山牧場乳酪'}},
+     {name:{fr:'Lebkuchen',zh:'薑餅'},desc:{fr:'Pain d\'épices traditionnel',zh:'傳統香料薑餅'}}
+   ],
+   tourism:[
+     {name:{fr:'Engelberg',zh:'恩格爾貝格'},desc:{fr:'Station de ski et monastère',zh:'滑雪勝地與本篤修道院'}},
+     {name:{fr:'Lac de Sarnen',zh:'薩爾嫩湖'},desc:{fr:'Lac paisible au centre du canton',zh:'州中心的寧靜湖泊'}},
+     {name:{fr:'Melchsee-Frutt',zh:'梅爾希湖'},desc:{fr:'Station de montagne panoramique',zh:'全景山地度假村'}}
+   ],
+   sports:[
+     {name:{fr:'Ski à Engelberg',zh:'恩格爾貝格滑雪'},desc:{fr:'Titlis et pistes variées',zh:'提特利斯山多樣滑雪道'}},
+     {name:{fr:'Randonnée Pilatus',zh:'皮拉圖斯山健行'},desc:{fr:'Depuis le côté obwaldien',zh:'上瓦爾登側健行路線'}}
+   ],
+   history:{fr:'Obwalden et Nidwalden formaient historiquement l\'Unterwald, l\'un des trois cantons fondateurs. Ils se séparèrent au XIVe siècle tout en restant proches.',zh:'上瓦爾登與下瓦爾登歷史上共同構成下瓦爾登，是三個創始州之一，14世紀分開但保持緊密關係。'},
+   water:{fr:'Lac de Sarnen, Lungerersee, Aa',zh:'薩爾嫩湖、倫格倫湖'},
+   funFact:{fr:'Obwalden est l\'un des plus petits cantons suisses avec seulement 37 000 habitants',zh:'上瓦爾登是瑞士最小的州之一，僅有約37,000居民'}},
+
+  {id:'NW',region:'de',emoji:'🌲',
+   name:{fr:'Nidwalden',zh:'下瓦爾登州'},
+   capital:{fr:'Stans',zh:'施坦斯'},
+   language:{fr:'Allemand',zh:'德語'},
+   food:[
+     {name:{fr:'Stanser Schafkäse',zh:'羊乳酪'},desc:{fr:'Fromage de brebis artisanal',zh:'手工羊乳酪'}},
+     {name:{fr:'Nidwaldner Läckerli',zh:'香料餅乾'},desc:{fr:'Biscuits épicés traditionnels',zh:'傳統香料餅乾'}},
+     {name:{fr:'Forellen du lac',zh:'湖泊鱒魚'},desc:{fr:'Truites du lac des Quatre-Cantons',zh:'四森林州湖鱒魚'}}
+   ],
+   tourism:[
+     {name:{fr:'Bürgenstock',zh:'屈爾希貝格'},desc:{fr:'Resort de luxe sur le lac',zh:'湖畔豪華度假村'}},
+     {name:{fr:'Stanserhorn',zh:'施坦斯角山'},desc:{fr:'Panorama alpin à 360°',zh:'360度阿爾卑斯山全景'}},
+     {name:{fr:'Lac des Quatre-Cantons',zh:'四森林州湖'},desc:{fr:'Rives de Nidwalden',zh:'下瓦爾登沿岸'}}
+   ],
+   sports:[
+     {name:{fr:'Ski à Engelberg',zh:'恩格爾貝格滑雪'},desc:{fr:'Partagé avec Obwalden',zh:'與上瓦爾登共用滑雪場'}},
+     {name:{fr:'Aviron',zh:'划船'},desc:{fr:'Sur le lac des Quatre-Cantons',zh:'四森林州湖划船'}}
+   ],
+   history:{fr:'Nidwalden résista à la domination française en 1798 avec l\'insurrection de Stans. Le village de Stans fut partiellement brûlé par les troupes françaises.',zh:'下瓦爾登於1798年以施坦斯起義抵抗法國統治。施坦斯村莊被法軍部分燒毀。'},
+   water:{fr:'Lac des Quatre-Cantons, Engelberger Aa',zh:'四森林州湖、恩格爾貝格河'},
+   funFact:{fr:'Le Bürgenstock accueille depuis 2019 un resort 5 étoiles surplombant le Lac des Quatre-Cantons',zh:'屈爾希貝格自2019年起擁有一座俯瞰四森林州湖的五星度假村'}},
+
+  {id:'GL',region:'de',emoji:'🦅',
+   name:{fr:'Glarus',zh:'格拉魯斯州'},
+   capital:{fr:'Glarus',zh:'格拉魯斯'},
+   language:{fr:'Allemand',zh:'德語'},
+   food:[
+     {name:{fr:'Schabziger',zh:'三葉草綠乳酪'},desc:{fr:'Fromage vert au trèfle unique',zh:'獨特三葉草綠色乳酪'}},
+     {name:{fr:'Glarner Pastete',zh:'酥皮餡餅'},desc:{fr:'Pâté en croûte traditionnel',zh:'傳統酥皮肉餡餅'}},
+     {name:{fr:'Ziger',zh:'脫脂乳酪'},desc:{fr:'Fromage maigre artisanal',zh:'手工脫脂乳酪'}}
+   ],
+   tourism:[
+     {name:{fr:'Klöntalersee',zh:'克倫塔爾湖'},desc:{fr:'Lac alpin paisible et sauvage',zh:'寧靜野生高山湖'}},
+     {name:{fr:'Braunwald',zh:'布勞恩瓦爾德'},desc:{fr:'Village sans voitures en altitude',zh:'高山無汽車村莊'}},
+     {name:{fr:'Pragelpass',zh:'普拉格爾山口'},desc:{fr:'Col panoramique historique',zh:'歷史全景山口'}}
+   ],
+   sports:[
+     {name:{fr:'Ski à Braunwald',zh:'布勞恩瓦爾德滑雪'},desc:{fr:'Station familiale sans voitures',zh:'無汽車家庭滑雪場'}},
+     {name:{fr:'Escalade',zh:'攀岩'},desc:{fr:'Falaises du Glärnisch',zh:'格拉尼什岩壁攀岩'}}
+   ],
+   history:{fr:'Glarus est célèbre pour la Landsgemeinde, l\'une des dernières démocraties directes à ciel ouvert. Chaque premier dimanche de mai, les citoyens votent en plein air.',zh:'格拉魯斯以州民大會（Landsgemeinde）聞名，是最後幾個露天直接民主之一，每年5月第一個星期日，公民在戶外投票。'},
+   water:{fr:'Klöntalersee, Limmat, Linth',zh:'克倫塔爾湖、林馬特河、林特河'},
+   funFact:{fr:'La Landsgemeinde de Glaris est l\'une des deux dernières assemblées démocratiques en plein air de Suisse',zh:'格拉魯斯州民大會是瑞士最後兩個露天民主集會之一'}},
+
+  {id:'ZG',region:'de',emoji:'💎',
+   name:{fr:'Zug',zh:'楚格州'},
+   capital:{fr:'Zug',zh:'楚格'},
+   language:{fr:'Allemand',zh:'德語'},
+   food:[
+     {name:{fr:'Zuger Kirschtorte',zh:'楚格櫻桃蛋糕'},desc:{fr:'Gâteau aux cerises et kirsch',zh:'櫻桃白蘭地蛋糕'}},
+     {name:{fr:'Zuger Rötel',zh:'楚格湖魚'},desc:{fr:'Poisson local du lac de Zoug',zh:'楚格湖本地魚料理'}},
+     {name:{fr:'Kirsch de Zoug',zh:'楚格櫻桃白蘭地'},desc:{fr:'Eau-de-vie de cerise artisanale',zh:'手工櫻桃白蘭地'}}
+   ],
+   tourism:[
+     {name:{fr:'Vieille ville de Zoug',zh:'楚格舊城'},desc:{fr:'Charmante ville médiévale lacustre',zh:'湖畔迷人中世紀古城'}},
+     {name:{fr:'Lac de Zoug',zh:'楚格湖'},desc:{fr:'Lac tranquille au cœur du canton',zh:'州中心的寧靜湖泊'}},
+     {name:{fr:'Burg Zug',zh:'楚格城堡'},desc:{fr:'Château médiéval du XIIIe siècle',zh:'13世紀中世紀城堡'}}
+   ],
+   sports:[
+     {name:{fr:'Voile',zh:'帆船'},desc:{fr:'Sur le lac de Zoug',zh:'楚格湖帆船運動'}},
+     {name:{fr:'Randonnée Zugberg',zh:'楚格山健行'},desc:{fr:'Vue panoramique sur le lac',zh:'俯瞰湖泊全景健行'}}
+   ],
+   history:{fr:'Zoug rejoignit la Confédération en 1352. Aujourd\'hui, Zoug est connu pour sa fiscalité avantageuse qui attire de nombreuses entreprises internationales.',zh:'楚格於1352年加入邦聯。今日因優惠稅制吸引大量國際企業，是瑞士最富裕的州之一。'},
+   water:{fr:'Lac de Zoug, Lorze',zh:'楚格湖、洛爾策河'},
+   funFact:{fr:'Zoug a le taux d\'imposition le plus bas de Suisse et abrite de nombreuses multinationales',zh:'楚格擁有瑞士最低稅率，許多跨國公司在此設立總部'}},
+
+  {id:'SO',region:'de',emoji:'⚜️',
+   name:{fr:'Solothurn',zh:'索洛圖恩州'},
+   capital:{fr:'Soleure',zh:'索洛圖恩'},
+   language:{fr:'Allemand',zh:'德語'},
+   food:[
+     {name:{fr:'Solothurner Torte',zh:'榛子蛋糕'},desc:{fr:'Gâteau aux noisettes caramélisées',zh:'焦糖榛子蛋糕'}},
+     {name:{fr:'Züpfe',zh:'辮子麵包'},desc:{fr:'Tresse dorée du dimanche',zh:'金黃色週日辮子麵包'}},
+     {name:{fr:'Mostbröckli',zh:'風乾肉片'},desc:{fr:'Viande de bœuf séchée fine',zh:'薄切風乾牛肉片'}}
+   ],
+   tourism:[
+     {name:{fr:'Vieille ville baroque',zh:'巴洛克舊城'},desc:{fr:'Joyau baroque autour du chiffre 11',zh:'以數字11為主題的巴洛克珍寶城'}},
+     {name:{fr:'Cathédrale Saint-Ours',zh:'聖烏爾斯大教堂'},desc:{fr:'Cathédrale baroque majestueuse',zh:'宏偉巴洛克大教堂'}},
+     {name:{fr:'Weissenstein',zh:'威森斯坦'},desc:{fr:'Panorama sur le Jura',zh:'侏羅山全景'}}
+   ],
+   sports:[
+     {name:{fr:'Ski Weissenstein',zh:'威森斯坦滑雪'},desc:{fr:'Station familiale du Jura',zh:'侏羅山家庭滑雪場'}},
+     {name:{fr:'Vélo Jura',zh:'侏羅山騎行'},desc:{fr:'Routes cyclistes panoramiques',zh:'侏羅山全景自行車路線'}}
+   ],
+   history:{fr:'Soleure est la capitale des ambassadeurs étrangers depuis le XVIe siècle. La ville est construite autour du chiffre 11 (11 fontaines, 11 tours, 11 églises).',zh:'索洛圖恩自16世紀起是外國大使的首都。整座城市圍繞數字11建造（11座噴泉、11座塔樓、11座教堂）。'},
+   water:{fr:'Aar, Lac de Bienne (partie)',zh:'阿勒河、比爾湖（部分）'},
+   funFact:{fr:'Soleure possède exactement 11 fontaines, 11 tours, 11 portes et 11 clochers — le chiffre sacré de la ville',zh:'索洛圖恩恰好有11座噴泉、11座塔樓、11座城門和11個鐘樓——這是該城市的神聖數字'}},
+
+  {id:'BS',region:'de',emoji:'🎨',
+   name:{fr:'Basel-Stadt',zh:'巴塞爾城市州'},
+   capital:{fr:'Basel',zh:'巴塞爾'},
+   language:{fr:'Allemand',zh:'德語'},
+   food:[
+     {name:{fr:'Basler Läckerli',zh:'蜂蜜薑餅乾'},desc:{fr:'Pain d\'épices au miel et kirsch',zh:'蜂蜜薑餅乾'}},
+     {name:{fr:'Basler Mehlsuppe',zh:'麵粉湯'},desc:{fr:'Soupe de farine grillée traditionnelle',zh:'傳統烤麵粉湯'}},
+     {name:{fr:'Ratsherrentopf',zh:'市議員燉肉'},desc:{fr:'Ragoût traditionnel de Bâle',zh:'巴塞爾傳統燉肉'}}
+   ],
+   tourism:[
+     {name:{fr:'Art Basel',zh:'巴塞爾藝術展'},desc:{fr:'Foire d\'art contemporain mondiale',zh:'全球頂尖當代藝術博覽會'}},
+     {name:{fr:'Fondation Beyeler',zh:'拜耶勒基金會'},desc:{fr:'Musée d\'art de renommée mondiale',zh:'世界知名藝術博物館'}},
+     {name:{fr:'Vieille ville',zh:'巴塞爾舊城'},desc:{fr:'Centre historique animé sur le Rhin',zh:'萊茵河畔活躍歷史城區'}}
+   ],
+   sports:[
+     {name:{fr:'Fasnacht',zh:'法斯納赫特嘉年華'},desc:{fr:'Carnaval de Bâle UNESCO',zh:'UNESCO巴塞爾嘉年華'}},
+     {name:{fr:'FC Basel',zh:'巴塞爾足球'},desc:{fr:'Club de football populaire',zh:'深受歡迎的足球俱樂部'}}
+   ],
+   history:{fr:'Bâle est un centre culturel majeur depuis la Renaissance. Erasme y vécut et mourut. La ville abrite l\'une des plus anciennes universités de Suisse (1460).',zh:'巴塞爾自文藝復興以來是重要文化中心，伊拉斯謨在此生活和去世。城市擁有瑞士最古老的大學之一（1460年）。'},
+   water:{fr:'Rhin',zh:'萊茵河'},
+   funFact:{fr:'Le Carnaval de Bâle (Fasnacht) est inscrit au patrimoine immatériel UNESCO depuis 2017',zh:'巴塞爾嘉年華（Fasnacht）自2017年起被列入UNESCO非物質文化遺產'}},
+
+  {id:'BL',region:'de',emoji:'🌾',
+   name:{fr:'Basel-Landschaft',zh:'巴塞爾鄉村州'},
+   capital:{fr:'Liestal',zh:'列斯塔爾'},
+   language:{fr:'Allemand',zh:'德語'},
+   food:[
+     {name:{fr:'Kirschkuchen',zh:'櫻桃塔'},desc:{fr:'Tarte aux cerises baselbieter',zh:'巴塞爾地區傳統櫻桃塔'}},
+     {name:{fr:'Rösti',zh:'薯餅'},desc:{fr:'Galette de pommes de terre',zh:'馬鈴薯煎餅'}},
+     {name:{fr:'Spécialités de marché',zh:'市場特產'},desc:{fr:'Produits du marché aux oignons',zh:'洋蔥市場特色產品'}}
+   ],
+   tourism:[
+     {name:{fr:'Augusta Raurica',zh:'奧古斯塔羅里卡'},desc:{fr:'Ruines romaines spectaculaires',zh:'壯觀羅馬古蹟'}},
+     {name:{fr:'Burg Birseck',zh:'比爾塞克城堡'},desc:{fr:'Château médiéval en ruine',zh:'中世紀廢棄城堡'}},
+     {name:{fr:'Römermuseum',zh:'羅馬博物館'},desc:{fr:'Musée d\'archéologie romaine',zh:'羅馬考古博物館'}}
+   ],
+   sports:[
+     {name:{fr:'Randonnée Jura',zh:'侏羅山健行'},desc:{fr:'Sentiers dans le Jura bâlois',zh:'巴塞爾侏羅山步道'}},
+     {name:{fr:'Vélo',zh:'自行車'},desc:{fr:'Pistes cyclables du canton',zh:'州內自行車道'}}
+   ],
+   history:{fr:'Bâle-Campagne se sépara de Bâle-Ville en 1833 suite à des tensions entre ville et campagne. Augusta Raurica est la plus ancienne colonie romaine du Rhin.',zh:'巴塞爾鄉村州於1833年因城鄉矛盾從巴塞爾城市州分離。境內的奧古斯塔羅里卡是萊茵河沿岸最古老的羅馬殖民地。'},
+   water:{fr:'Birse, Rhin',zh:'比爾斯河、萊茵河'},
+   funFact:{fr:'Augusta Raurica est la plus ancienne ville romaine fondée sur le Rhin, datant de 44 avant J.-C.',zh:'奧古斯塔羅里卡是萊茵河沿岸最古老的羅馬城市，建於公元前44年'}},
+
+  {id:'AG',region:'de',emoji:'🏰',
+   name:{fr:'Aargau',zh:'阿爾高州'},
+   capital:{fr:'Aarau',zh:'阿勞'},
+   language:{fr:'Allemand',zh:'德語'},
+   food:[
+     {name:{fr:'Rüeblitorte',zh:'紅蘿蔔蛋糕'},desc:{fr:'Gâteau aux carottes typique',zh:'典型紅蘿蔔蛋糕'}},
+     {name:{fr:'Wurstsalat',zh:'香腸沙拉'},desc:{fr:'Salade de saucisses aargauoise',zh:'阿爾高香腸沙拉'}},
+     {name:{fr:'Maluns',zh:'馬鈴薯料理'},desc:{fr:'Gratin de pommes de terre alpin',zh:'高山馬鈴薯烤飯'}}
+   ],
+   tourism:[
+     {name:{fr:'Château de Habsbourg',zh:'哈布斯堡城堡'},desc:{fr:'Berceau de la maison d\'Autriche',zh:'奧地利哈布斯堡王朝發源地'}},
+     {name:{fr:'Baden',zh:'巴登溫泉'},desc:{fr:'Thermes romains et spa',zh:'羅馬溫泉與水療'}},
+     {name:{fr:'Schloss Lenzburg',zh:'倫茨堡城堡'},desc:{fr:'Château médiéval bien conservé',zh:'保存完好的中世紀城堡'}}
+   ],
+   sports:[
+     {name:{fr:'Thermes de Baden',zh:'巴登溫泉療養'},desc:{fr:'Spa thermal réputé',zh:'知名熱泉療養'}},
+     {name:{fr:'Kayak',zh:'獨木舟'},desc:{fr:'Sur la rivière Aar',zh:'阿勒河獨木舟'}}
+   ],
+   history:{fr:'L\'Argovie est le berceau de la maison des Habsbourg, qui domina l\'Europe pendant des siècles. Le château de Habsbourg fut leur demeure ancestrale.',zh:'阿爾高州是哈布斯堡王朝的發源地，這個家族統治歐洲數百年。哈布斯堡城堡是其祖先的家園。'},
+   water:{fr:'Aar, Rhin, Reuss, Limmat',zh:'阿勒河、萊茵河、羅伊斯河、林馬特河'},
+   funFact:{fr:'L\'Argovie est surnommée "le canton des châteaux" avec plus de 200 châteaux et ruines',zh:'阿爾高州被稱為「城堡之州」，擁有超過200座城堡和廢墟'}},
+
+  {id:'SH',region:'de',emoji:'💧',
+   name:{fr:'Schaffhausen',zh:'沙夫豪森州'},
+   capital:{fr:'Schaffhausen',zh:'沙夫豪森'},
+   language:{fr:'Allemand',zh:'德語'},
+   food:[
+     {name:{fr:'Bölletünne',zh:'洋蔥薄餅'},desc:{fr:'Tarte aux oignons traditionnelle',zh:'傳統洋蔥薄餅塔'}},
+     {name:{fr:'Süssmost',zh:'蘋果汁'},desc:{fr:'Jus de pomme pressé local',zh:'本地鮮榨蘋果汁'}},
+     {name:{fr:'Hallauer Wein',zh:'哈勞紅酒'},desc:{fr:'Vin rouge Pinot Noir local',zh:'本地黑皮諾紅葡萄酒'}}
+   ],
+   tourism:[
+     {name:{fr:'Chutes du Rhin',zh:'萊茵瀑布'},desc:{fr:'Plus grandes chutes d\'eau d\'Europe',zh:'歐洲最大瀑布'}},
+     {name:{fr:'Munot',zh:'穆諾特城堡'},desc:{fr:'Forteresse circulaire du XVIe siècle',zh:'16世紀圓形要塞'}},
+     {name:{fr:'Vieille ville',zh:'中世紀古城'},desc:{fr:'Peintures murales remarquables',zh:'著名壁畫中世紀古城'}}
+   ],
+   sports:[
+     {name:{fr:'Kayak Rhin',zh:'萊茵河獨木舟'},desc:{fr:'Près des chutes du Rhin',zh:'萊茵瀑布附近獨木舟'}},
+     {name:{fr:'Randonnée Rhin',zh:'萊茵河健行'},desc:{fr:'Sentier du bord du Rhin',zh:'萊茵河沿岸健行步道'}}
+   ],
+   history:{fr:'Schaffhouse est la seule ville suisse au nord du Rhin. Les chutes du Rhin attirèrent Goethe et Turner pour leurs paysages spectaculaires.',zh:'沙夫豪森是唯一位於萊茵河北岸的瑞士城市。萊茵瀑布吸引了歌德和泰納等藝術家。'},
+   water:{fr:'Rhin, Chutes du Rhin',zh:'萊茵河、萊茵瀑布'},
+   funFact:{fr:'Les chutes du Rhin sont les plus puissantes cascades d\'Europe avec 700 m³/s en été',zh:'萊茵瀑布是歐洲流量最大的瀑布，夏季流量達每秒700立方公尺'}},
+
+  {id:'TG',region:'de',emoji:'🍎',
+   name:{fr:'Thurgau',zh:'圖爾高州'},
+   capital:{fr:'Frauenfeld',zh:'弗勞恩費爾德'},
+   language:{fr:'Allemand',zh:'德語'},
+   food:[
+     {name:{fr:'Thurgauer Apfelwein',zh:'蘋果酒'},desc:{fr:'Cidre artisanal local',zh:'本地手工蘋果酒'}},
+     {name:{fr:'Thurgauer Most',zh:'蘋果汁'},desc:{fr:'Jus de pomme frais du verger',zh:'新鮮果園蘋果汁'}},
+     {name:{fr:'Felchen du Bodensee',zh:'博登湖鯿魚'},desc:{fr:'Féra fraîche du lac de Constance',zh:'新鮮博登湖鯿魚'}}
+   ],
+   tourism:[
+     {name:{fr:'Lac de Constance',zh:'博登湖'},desc:{fr:'Grand lac aux 3 pays',zh:'三國交界大湖'}},
+     {name:{fr:'Château de Gottlieben',zh:'戈特利本城堡'},desc:{fr:'Château médiéval pittoresque',zh:'風景如畫的中世紀城堡'}},
+     {name:{fr:'Île de Reichenau',zh:'賴歇瑙島'},desc:{fr:'Île monastique UNESCO',zh:'UNESCO修道院島嶼'}}
+   ],
+   sports:[
+     {name:{fr:'Voile Bodensee',zh:'博登湖帆船'},desc:{fr:'Voile sur le lac de Constance',zh:'博登湖帆船運動'}},
+     {name:{fr:'Bodensee-Radweg',zh:'博登湖自行車道'},desc:{fr:'Piste cyclable autour du lac',zh:'環湖自行車路線'}}
+   ],
+   history:{fr:'La Thurgovie fut longtemps un bailliage commun de la Confédération. Elle devint canton indépendant en 1803. La région est le premier verger de Suisse.',zh:'圖爾高長期是邦聯的共同領地，1803年成為獨立州。該地區是瑞士最重要的果園，以蘋果聞名。'},
+   water:{fr:'Lac de Constance, Rhin, Thur',zh:'博登湖、萊茵河、圖爾河'},
+   funFact:{fr:'La Thurgovie produit environ la moitié de toutes les pommes cultivées en Suisse',zh:'圖爾高州生產瑞士約一半的蘋果產量'}},
+
+  {id:'SG',region:'de',emoji:'📚',
+   name:{fr:'St. Gallen',zh:'聖加倫州'},
+   capital:{fr:'St. Gallen',zh:'聖加倫'},
+   language:{fr:'Allemand',zh:'德語'},
+   food:[
+     {name:{fr:'St. Galler Bratwurst',zh:'烤白香腸'},desc:{fr:'Saucisse blanche grillée sans moutarde',zh:'不加芥末的烤白香腸'}},
+     {name:{fr:'Appenzeller Käse',zh:'阿彭策爾乳酪'},desc:{fr:'Fromage fort aux herbes secrètes',zh:'秘方香草濃味乳酪'}},
+     {name:{fr:'Birnbrot',zh:'梨乾麵包'},desc:{fr:'Pain aux poires séchées et épices',zh:'梨乾香料麵包'}}
+   ],
+   tourism:[
+     {name:{fr:'Abbaye de Saint-Gall',zh:'聖加倫修道院'},desc:{fr:'Bibliothèque baroque UNESCO',zh:'UNESCO巴洛克圖書館'}},
+     {name:{fr:'Appenzell',zh:'阿彭策爾村'},desc:{fr:'Village pittoresque traditionnel',zh:'風景如畫的傳統村莊'}},
+     {name:{fr:'Walensee',zh:'瓦倫湖'},desc:{fr:'Lac alpin spectaculaire',zh:'壯觀高山湖泊'}}
+   ],
+   sports:[
+     {name:{fr:'Ski Toggenburg',zh:'托根堡滑雪'},desc:{fr:'Station de ski populaire',zh:'熱門滑雪勝地'}},
+     {name:{fr:'FC St. Gallen',zh:'聖加倫足球'},desc:{fr:'Plus vieux club de foot suisse (1879)',zh:'瑞士最古老足球俱樂部（1879年）'}}
+   ],
+   history:{fr:'L\'Abbaye de Saint-Gall, fondée au VIIe siècle, fut l\'un des grands centres culturels du Moyen Âge. Sa bibliothèque est parmi les plus anciennes et précieuses du monde.',zh:'聖加倫修道院建於7世紀，是中世紀重要文化中心之一。其圖書館是世界上最古老和珍貴的圖書館之一。'},
+   water:{fr:'Lac de Constance, Walensee, Thur',zh:'博登湖、瓦倫湖、圖爾河'},
+   funFact:{fr:'La Stiftsbibliothek conserve des manuscrits datant du VIIIe siècle',zh:'聖加倫修道院圖書館保存著可追溯至8世紀的手稿'}},
+
+  {id:'AR',region:'de',emoji:'🎭',
+   name:{fr:'Appenzell Ausserrhoden',zh:'外阿彭策爾州'},
+   capital:{fr:'Herisau',zh:'赫里紹'},
+   language:{fr:'Allemand',zh:'德語'},
+   food:[
+     {name:{fr:'Appenzeller Käse',zh:'阿彭策爾乳酪'},desc:{fr:'Fromage épicé aux herbes secrètes',zh:'秘方香草辛辣乳酪'}},
+     {name:{fr:'Siedwurst',zh:'水煮香腸'},desc:{fr:'Saucisse bouillie traditionnelle',zh:'傳統水煮香腸'}},
+     {name:{fr:'Mostbröckli',zh:'風乾牛肉'},desc:{fr:'Bœuf séché en fines tranches',zh:'薄切風乾牛肉'}}
+   ],
+   tourism:[
+     {name:{fr:'Säntis',zh:'聖提斯山'},desc:{fr:'Sommet panoramique à 2502m',zh:'2502公尺全景山頂'}},
+     {name:{fr:'Ebenalp',zh:'埃本阿爾普'},desc:{fr:'Falaises et restaurant dans la roche',zh:'懸崖與岩石中的餐廳'}},
+     {name:{fr:'Appenzell village',zh:'阿彭策爾村'},desc:{fr:'Village folklorique pittoresque',zh:'風景如畫的民俗村莊'}}
+   ],
+   sports:[
+     {name:{fr:'Alpstein',zh:'阿爾普斯坦健行'},desc:{fr:'Randonnée dans le massif Alpstein',zh:'阿爾普斯坦山地健行'}},
+     {name:{fr:'Ski Säntis',zh:'聖提斯滑雪'},desc:{fr:'Ski en altitude sur le Säntis',zh:'聖提斯山高空滑雪'}}
+   ],
+   history:{fr:'Appenzell Ausserrhoden et Innerrhoden se séparèrent en 1597 suite à la Réforme (Ausserrhoden devint protestant). Les deux demi-cantons sont enclavés dans le canton de Saint-Gall.',zh:'外阿彭策爾和內阿彭策爾因宗教改革於1597年分離（外阿彭策爾成為新教）。兩個半州被聖加倫州包圍。'},
+   water:{fr:'Lac de Constance (partie), Sitter',zh:'博登湖（部分）、錫特河'},
+   funFact:{fr:'Appenzell Ausserrhoden fut le dernier canton suisse à accorder le droit de vote aux femmes, en 1990',zh:'外阿彭策爾是瑞士最後一個授予女性投票權的州，於1990年'}},
+
+  {id:'AI',region:'de',emoji:'🎪',
+   name:{fr:'Appenzell Innerrhoden',zh:'內阿彭策爾州'},
+   capital:{fr:'Appenzell',zh:'阿彭策爾'},
+   language:{fr:'Allemand',zh:'德語'},
+   food:[
+     {name:{fr:'Appenzeller Käse AOP',zh:'阿彭策爾AOP乳酪'},desc:{fr:'Fromage à la recette secrète',zh:'秘方配方乳酪'}},
+     {name:{fr:'Mostbröckli',zh:'風乾肉'},desc:{fr:'Viande séchée traditionnelle',zh:'傳統風乾肉'}},
+     {name:{fr:'Siedwurst',zh:'香腸'},desc:{fr:'Saucisse locale bouillie',zh:'本地水煮香腸'}}
+   ],
+   tourism:[
+     {name:{fr:'Village d\'Appenzell',zh:'阿彭策爾村'},desc:{fr:'Traditions vivantes et folklore',zh:'活態傳統與民俗文化'}},
+     {name:{fr:'Landsgemeinde',zh:'州民大會'},desc:{fr:'Vote en plein air annuel',zh:'年度露天民主投票'}},
+     {name:{fr:'Aescher-Wildkirchli',zh:'埃斯徹懸崖餐廳'},desc:{fr:'Restaurant dans la falaise',zh:'建在懸崖上的餐廳'}}
+   ],
+   sports:[
+     {name:{fr:'Alpstein Trekking',zh:'阿爾普斯坦徒步'},desc:{fr:'Randonnée multi-jours',zh:'多日山地徒步'}},
+     {name:{fr:'Schwingen',zh:'瑞士摔跤'},desc:{fr:'Lutte suisse traditionnelle',zh:'傳統瑞士式摔跤'}}
+   ],
+   history:{fr:'Appenzell Innerrhoden est resté catholique lors de la Réforme et maintient la Landsgemeinde annuelle. C\'est le canton le moins peuplé de Suisse.',zh:'內阿彭策爾在宗教改革中保持天主教信仰，並維持年度州民大會。這是瑞士人口最少的州。'},
+   water:{fr:'Sitter, Urnäsch',zh:'錫特河、烏爾讷施河'},
+   funFact:{fr:'L\'Aescher-Wildkirchli, restaurant dans la falaise de l\'Ebenalp, est l\'un des plus photographiés de Suisse',zh:'埃斯徹-野教堂懸崖餐廳是瑞士被拍攝最多的地點之一'}},
+
+  {id:'GR',region:'rm',emoji:'🏔️',
+   name:{fr:'Graubünden',zh:'格勞賓登州'},
+   capital:{fr:'Coire',zh:'庫爾'},
+   language:{fr:'Allemand, Romanche, Italien',zh:'德語、羅曼什語、義大利語'},
+   food:[
+     {name:{fr:'Bündner Nusstorte',zh:'核桃塔'},desc:{fr:'Tarte aux noix caramélisées',zh:'焦糖核桃塔'}},
+     {name:{fr:'Bündnerfleisch',zh:'高山風乾牛肉'},desc:{fr:'Viande séchée d\'altitude',zh:'高海拔風乾牛肉'}},
+     {name:{fr:'Maluns',zh:'羅曼什馬鈴薯'},desc:{fr:'Plat romanche de pommes de terre',zh:'羅曼什傳統馬鈴薯料理'}}
+   ],
+   tourism:[
+     {name:{fr:'St. Moritz',zh:'聖莫里茨'},desc:{fr:'Station de luxe mondiale',zh:'全球頂級豪華度假村'}},
+     {name:{fr:'Davos',zh:'達沃斯'},desc:{fr:'Station mondiale et forum économique',zh:'世界級滑雪場與經濟論壇'}},
+     {name:{fr:'Parc National Suisse',zh:'瑞士國家公園'},desc:{fr:'Seul parc national de Suisse',zh:'瑞士唯一國家公園'}}
+   ],
+   sports:[
+     {name:{fr:'Ski St. Moritz',zh:'聖莫里茨滑雪'},desc:{fr:'2 Jeux Olympiques d\'hiver',zh:'兩屆冬季奧運主辦地'}},
+     {name:{fr:'Engadin Skimarathon',zh:'恩加丁滑雪馬拉松'},desc:{fr:'Marathon de ski de fond annuel',zh:'年度越野滑雪馬拉松'}}
+   ],
+   history:{fr:'Graubünden est le plus grand et le plus diversifié des cantons suisses. C\'est le seul canton avec trois langues officielles. La langue romanche y est protégée activement.',zh:'格勞賓登是瑞士最大且最多元的州，是唯一擁有三種官方語言的州。羅曼什語在此受到積極保護。'},
+   water:{fr:'Inn, Rhin, Lac de Côme (source)',zh:'因河、萊茵河、科莫湖（源頭）'},
+   funFact:{fr:'Le Parc National Suisse dans les Grisons est le plus ancien parc national des Alpes (fondé en 1914)',zh:'格勞賓登的瑞士國家公園是阿爾卑斯山最古老的國家公園（1914年建立）'}},
+
+  {id:'TI',region:'it',emoji:'🌞',
+   name:{fr:'Ticino',zh:'提契諾州'},
+   capital:{fr:'Bellinzone',zh:'貝林佐納'},
+   language:{fr:'Italien',zh:'義大利語'},
+   food:[
+     {name:{fr:'Polenta e brasato',zh:'玉米糊燉肉'},desc:{fr:'Polenta crémeuse et viande braisée',zh:'濃郁玉米糊配燉肉'}},
+     {name:{fr:'Risotto con luganighetta',zh:'香腸燉飯'},desc:{fr:'Risotto avec saucisse ticinoise',zh:'提契諾香腸燉飯'}},
+     {name:{fr:'Formaggi ticinesi',zh:'提契諾乳酪'},desc:{fr:'Mélange de fromages locaux',zh:'本地乳酪拼盤'}}
+   ],
+   tourism:[
+     {name:{fr:'Lugano',zh:'盧加諾'},desc:{fr:'Lac et palmes méditerranéens',zh:'地中海風情棕櫚湖城'}},
+     {name:{fr:'Locarno',zh:'洛迦諾'},desc:{fr:'Festival international du film',zh:'國際電影節城市'}},
+     {name:{fr:'Châteaux de Bellinzone',zh:'貝林佐納城堡群'},desc:{fr:'Trois châteaux UNESCO',zh:'UNESCO三座城堡'}}
+   ],
+   sports:[
+     {name:{fr:'Cyclisme',zh:'自行車'},desc:{fr:'Tour de Romandie et courses',zh:'浪漫地區巡迴賽等賽事'}},
+     {name:{fr:'Natation lacustre',zh:'湖泊游泳'},desc:{fr:'Lacs chauds et cristallins',zh:'清澈溫暖的湖泊游泳'}}
+   ],
+   history:{fr:'Le Tessin fut longtemps une région stratégique contrôlant le col du Gothard. Il rejoignit la Confédération en 1803. C\'est le seul canton entièrement italophone.',zh:'提契諾州長期是控制哥達山口的戰略要地，1803年加入邦聯。這是唯一完全以義大利語為主的州。'},
+   water:{fr:'Lac Majeur, Lac de Lugano, Tessin',zh:'馬焦雷湖、盧加諾湖、提契諾河'},
+   funFact:{fr:'Locarno abrite chaque août l\'un des plus anciens festivals du cinéma au monde, fondé en 1946',zh:'洛迦諾每年八月舉辦世界最古老電影節之一，創辦於1946年'}}
+];
+
+const regionColors = {fr:'#e63946', de:'#1976d2', it:'#388e3c', rm:'#f57c00'};
+const regionNames = {
+  fr:{fr:'Romandie', zh:'法語區'},
+  de:{fr:'Alémanique', zh:'德語區'},
+  it:{fr:'Tessin', zh:'提契諾義大利語區'},
+  rm:{fr:'Romanche', zh:'羅曼什語區'}
+};
+
+// Canton positions on 600x400 SVG map (approximate geographic positions)
+const cantonPositions = {
+  GE:{x:60,y:330}, VD:{x:110,y:295}, NE:{x:130,y:245}, JU:{x:100,y:195},
+  FR:{x:175,y:285}, BE:{x:215,y:255}, VS:{x:200,y:340}, SO:{x:195,y:205},
+  BS:{x:185,y:155}, BL:{x:180,y:170}, AG:{x:245,y:175}, LU:{x:275,y:230},
+  OW:{x:295,y:265}, NW:{x:295,y:250}, GL:{x:345,y:265}, ZG:{x:305,y:215},
+  ZH:{x:330,y:185}, UR:{x:320,y:295}, SZ:{x:330,y:240}, SH:{x:320,y:140},
+  TG:{x:375,y:165}, AR:{x:400,y:215}, AI:{x:410,y:225}, SG:{x:395,y:195},
+  GR:{x:420,y:310}, TI:{x:340,y:370}
+};
+
+const glossary = [
+  {term:{fr:'Canton',zh:'州'}, def:{fr:'Division administrative de la Suisse. Il en existe 26 au total.',zh:'瑞士的行政區劃，共26個州。'}},
+  {term:{fr:'Confédération',zh:'邦聯'}, def:{fr:'Organisation politique de la Suisse depuis 1291.',zh:'自1291年以來瑞士的政治組織形式。'}},
+  {term:{fr:'Landsgemeinde',zh:'州民大會'}, def:{fr:'Assemblée démocratique directe à ciel ouvert, encore pratiquée dans certains cantons.',zh:'露天直接民主議會，在部分州仍在實踐。'}},
+  {term:{fr:'Rösti',zh:'薯餅'}, def:{fr:'Galette de pommes de terre, plat populaire en Suisse alémanique, aussi métaphore de la frontière culturelle.',zh:'馬鈴薯煎餅，德語區流行食物，也是文化分界線的比喻。'}},
+  {term:{fr:'Fondue',zh:'乳酪火鍋'}, def:{fr:'Plat traditionnel suisse de fromage fondu partagé.',zh:'傳統瑞士熔化乳酪共享料理。'}},
+  {term:{fr:'Raclette',zh:'拉克萊特'}, def:{fr:'Fromage fondu sur une demi-meule, spécialité valaisanne.',zh:'半個輪狀乳酪加熱後刮下食用，瓦萊州特產。'}},
+  {term:{fr:'AOP',zh:'原產地保護'}, def:{fr:'Appellation d\'Origine Protégée — garantit l\'origine et la méthode de production.',zh:'原產地名稱保護，保證產品來源及生產方式。'}},
+  {term:{fr:'Schwingen',zh:'瑞士摔跤'}, def:{fr:'Sport de lutte traditionnel suisse, pratiqué sur sciure de bois.',zh:'瑞士傳統摔跤運動，在木屑場上進行。'}},
+  {term:{fr:'Cervin',zh:'馬特洪峰'}, def:{fr:'Montagne emblématique des Alpes (4478m) au Valais, symbole de la Suisse.',zh:'瓦萊州的標誌性阿爾卑斯山峰（4478公尺），瑞士的象徵。'}},
+  {term:{fr:'Röstigraben',zh:'薯餅溝'}, def:{fr:'Frontière culturelle et linguistique entre la Suisse alémanique et la Romandie.',zh:'德語瑞士與法語羅曼底之間的文化和語言邊界。'}},
+  {term:{fr:'Romanche',zh:'羅曼什語'}, def:{fr:'Quatrième langue nationale de la Suisse, parlée principalement dans les Grisons.',zh:'瑞士第四種國家語言，主要在格勞賓登州使用。'}},
+  {term:{fr:'Alpe',zh:'阿爾卑斯牧場'}, def:{fr:'Pâturage de montagne utilisé en été pour faire paître le bétail.',zh:'夏季用於放牧的山地牧場。'}},
+  {term:{fr:'Bisse',zh:'水渠'}, def:{fr:'Canal d\'irrigation traditionnel en Valais, souvent taillé dans la roche.',zh:'瓦萊州的傳統灌溉渠道，常鑿岩而成。'}},
+  {term:{fr:'Grütli / Rütli',zh:'呂特利草地'}, def:{fr:'Prairie sur le lac des Quatre-Cantons où fut signé le Serment fédéral de 1291.',zh:'四森林州湖畔草地，1291年聯邦誓約在此簽署。'}},
+  {term:{fr:'Horlogerie',zh:'製錶業'}, def:{fr:'Industrie emblématique de la Suisse, notamment en Romandie et à La Chaux-de-Fonds.',zh:'瑞士標誌性產業，尤其在法語區和拉紹德封。'}}
+];
+
+const regionsData = [
+  {id:'fr', color:'#e63946',
+   name:{fr:'Romandie', zh:'法語區'},
+   desc:{fr:'La Romandie regroupe les cantons de langue française: Genève, Vaud, Valais (en partie), Fribourg (en partie), Neuchâtel et Jura. Elle est influencée par la culture française et abrite des organisations internationales majeures.',
+         zh:'法語區包含以法語為主的州：日內瓦、沃州、瓦萊（部分）、弗里堡（部分）、納沙泰爾和汝拉州。受法國文化影響，是眾多重要國際組織的所在地。'},
+   cantons:['GE','VD','NE','JU','FR','VS']},
+  {id:'de', color:'#1976d2',
+   name:{fr:'Suisse alémanique', zh:'德語瑞士'},
+   desc:{fr:'La Suisse alémanique est la région la plus grande, avec des cantons de langue allemande. Elle comprend Zürich, Berne, Lucerne et de nombreux autres cantons alpins. Le dialecte alémanique (Schweizerdeutsch) y est parlé quotidiennement.',
+         zh:'德語瑞士是最大的語言區，包含以德語為主的州，如蘇黎世、伯恩、琉森及眾多高山州。日常使用阿勒曼尼德語方言（瑞士德語）。'},
+   cantons:['ZH','BE','LU','UR','SZ','OW','NW','GL','ZG','SO','BS','BL','AG','SH','TG','SG','AR','AI']},
+  {id:'it', color:'#388e3c',
+   name:{fr:'Tessin', zh:'提契諾州'},
+   desc:{fr:'Le Tessin est le seul canton entièrement italophone de Suisse. Il offre un cadre méditerranéen unique avec ses lacs, palmiers et architecture italienne. C\'est la partie la plus méridionale de la Suisse.',
+         zh:'提契諾州是瑞士唯一完全以義大利語為主的州，擁有地中海風情的湖泊、棕櫚樹和義大利式建築，是瑞士最南端的部分。'},
+   cantons:['TI']},
+  {id:'rm', color:'#f57c00',
+   name:{fr:'Grisons (Romanche)', zh:'格勞賓登（羅曼什語）'},
+   desc:{fr:'Les Grisons sont l\'unique canton avec trois langues officielles: allemand, romanche et italien. Le romanche, langue néo-latine, est la quatrième langue nationale suisse et est activement protégé.',
+         zh:'格勞賓登州是唯一擁有三種官方語言的州：德語、羅曼什語和義大利語。羅曼什語是一種新拉丁語言，是瑞士第四種國家語言，受到積極保護。'},
+   cantons:['GR']}
+];
+
+// ───────── Utility ─────────
+function t(key) {
+  return (i18n[key] && i18n[key][lang]) || key;
+}
+function saveStorage(key, value) {
+  try { localStorage.setItem(key, JSON.stringify(value)); } catch(e) {}
+}
+function loadStorage(key, fallback) {
+  try { return JSON.parse(localStorage.getItem(key) || JSON.stringify(fallback)); } catch(e) { return fallback; }
+}
+
+// ───────── Screen navigation ─────────
+function showScreen(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  const screen = document.getElementById('screen-' + name);
+  if (screen) { screen.classList.add('active'); screen.classList.add('fade-in'); }
+  const navBtn = document.getElementById('nav-' + name);
+  if (navBtn) navBtn.classList.add('active');
+  const backBtn = document.getElementById('btn-back');
+  if (name === 'detail') { backBtn.classList.add('visible'); }
+  else { backBtn.classList.remove('visible'); }
+  currentScreen = name;
+  window.scrollTo(0, 0);
+  if (name === 'map') renderMap();
+  if (name === 'glossary') renderGlossary();
+  if (name === 'regions') renderRegions();
+  updateI18n();
+}
+
+function goBack() {
+  showScreen('map');
+}
+
+// ───────── Language toggle ─────────
+function toggleLang() {
+  lang = lang === 'fr' ? 'zh' : 'fr';
+  updateI18n();
+  if (currentScreen === 'map') renderMap();
+  if (currentScreen === 'detail' && currentCanton) showCanton(currentCanton.id);
+  if (currentScreen === 'glossary') renderGlossary();
+  if (currentScreen === 'regions') renderRegions();
+}
+
+function updateI18n() {
+  document.querySelectorAll('[data-i]').forEach(el => {
+    const key = el.getAttribute('data-i');
+    if (i18n[key]) el.textContent = i18n[key][lang] || i18n[key].fr;
+  });
+  document.getElementById('visited-count').textContent = visited.size;
+  document.getElementById('fav-count').textContent = favs.size;
+  // Update progress bar if present
+  const pb = document.getElementById('progress-bar-fill');
+  if (pb) pb.style.width = (visited.size / 26 * 100) + '%';
+}
+
+// ───────── Map rendering (D3 géographique) ─────────
+const hcKeyToId = {
+  'ch-ge':'GE','ch-vd':'VD','ch-ne':'NE','ch-ju':'JU','ch-fr':'FR',
+  'ch-vs':'VS','ch-zh':'ZH','ch-be':'BE','ch-lu':'LU','ch-ur':'UR',
+  'ch-sz':'SZ','ch-ow':'OW','ch-nw':'NW','ch-gl':'GL','ch-zg':'ZG',
+  'ch-so':'SO','ch-bs':'BS','ch-bl':'BL','ch-ag':'AG','ch-sh':'SH',
+  'ch-tg':'TG','ch-sg':'SG','ch-ar':'AR','ch-ai':'AI','ch-gr':'GR','ch-ti':'TI'
+};
+let mapGeoJSON = null;
+
+function renderMap() {
+  if (mapGeoJSON) { renderGeoMap(); return; }
+  const svg = document.getElementById('map');
+  svg.innerHTML = '<rect width="600" height="400" fill="#e8f4f8" rx="8"/>' +
+    '<text x="300" y="198" text-anchor="middle" fill="#888" font-size="13" font-family="system-ui,sans-serif">🗺️ Chargement de la carte...</text>';
+  fetch('https://code.highcharts.com/mapdata/countries/ch/ch-all.geo.json')
+    .then(r => r.json())
+    .then(data => { mapGeoJSON = data; renderGeoMap(); })
+    .catch(() => renderFallbackMap());
+}
+
+// ── Projection Mercator maison (sans dépendance externe) ──
+function buildProjection(features, W, H) {
+  let minLon=Infinity, maxLon=-Infinity, minLat=Infinity, maxLat=-Infinity;
+  features.forEach(f => eachCoord(f.geometry, ([lon, lat]) => {
+    if(lon<minLon) minLon=lon; if(lon>maxLon) maxLon=lon;
+    if(lat<minLat) minLat=lat; if(lat>maxLat) maxLat=lat;
+  }));
+  const pad=12, scaleX=(W-2*pad)/(maxLon-minLon), scaleY=(H-2*pad)/(maxLat-minLat);
+  const scale=Math.min(scaleX,scaleY);
+  const offX=pad+(W-2*pad-(maxLon-minLon)*scale)/2;
+  const offY=pad+(H-2*pad-(maxLat-minLat)*scale)/2;
+  return ([lon,lat]) => [+(offX+(lon-minLon)*scale).toFixed(1), +(offY+(maxLat-lat)*scale).toFixed(1)];
+}
+function eachCoord(geom, fn) {
+  if(!geom) return;
+  if(geom.type==='Polygon') geom.coordinates.forEach(r=>r.forEach(fn));
+  else if(geom.type==='MultiPolygon') geom.coordinates.forEach(p=>p.forEach(r=>r.forEach(fn)));
+}
+function featureToPath(feat, proj) {
+  const geom=feat.geometry; if(!geom) return '';
+  const ring=r=>r.map((c,i)=>(i?'L':'M')+proj(c).join(',')).join('')+'Z';
+  if(geom.type==='Polygon') return geom.coordinates.map(ring).join('');
+  if(geom.type==='MultiPolygon') return geom.coordinates.map(p=>p.map(ring).join('')).join('');
+  return '';
+}
+function featureCentroid(feat, proj) {
+  let sx=0, sy=0, n=0;
+  eachCoord(feat.geometry, c=>{ const [x,y]=proj(c); sx+=x; sy+=y; n++; });
+  return n ? [sx/n, sy/n] : null;
+}
+
+function renderGeoMap() {
+  const svg = document.getElementById('map');
+  while(svg.firstChild) svg.removeChild(svg.firstChild);
+  const W=600, H=386;
+  const proj = buildProjection(mapGeoJSON.features, W, H);
+
+  const mkEl = (tag,attrs) => {
+    const el=document.createElementNS('http://www.w3.org/2000/svg',tag);
+    Object.entries(attrs).forEach(([k,v])=>el.setAttribute(k,v));
+    return el;
+  };
+
+  svg.appendChild(mkEl('rect',{width:600,height:400,fill:'#dce8f0',rx:8}));
+
+  mapGeoJSON.features.forEach(feat => {
+    const props = feat.properties || {};
+    const id = props['hc-a2'] || hcKeyToId[props['hc-key']] || null;
+    if(!id) return;
+    const canton = cantons.find(c=>c.id===id);
+    if(!canton) return;
+
+    const color = regionColors[canton.region]||'#888';
+    const isDimmed = activeRegion!=='all' && canton.region!==activeRegion;
+    const isVisited = visited.has(id);
+    const baseOpacity = isDimmed ? '0.3' : '0.82';
+
+    const g = document.createElementNS('http://www.w3.org/2000/svg','g');
+    const pathEl = mkEl('path',{
+      d: featureToPath(feat,proj),
+      fill: isDimmed?'#aabbc8':color,
+      'fill-opacity': baseOpacity,
+      stroke: isVisited?'#ffc107':'#fff',
+      'stroke-width': isVisited?'2.5':'0.8',
+      style:'cursor:pointer'
+    });
+    g.appendChild(pathEl);
+
+    const c = featureCentroid(feat,proj);
+    if(c) {
+      const txt = mkEl('text',{x:c[0],y:c[1],'text-anchor':'middle','dominant-baseline':'central',
+        'font-size':'7','font-weight':'700',fill:isDimmed?'#667788':'#fff','pointer-events':'none'});
+      txt.textContent=id;
+      g.appendChild(txt);
+    }
+
+    g.addEventListener('mouseenter',()=>{
+      pathEl.setAttribute('fill-opacity','1');
+      const tt=document.getElementById('tooltip');
+      tt.textContent=canton.name[lang]+' ('+id+')'; tt.style.display='block';
+    });
+    g.addEventListener('mousemove',e=>{
+      const tt=document.getElementById('tooltip');
+      tt.style.left=(e.clientX+12)+'px'; tt.style.top=(e.clientY-30)+'px';
+    });
+    g.addEventListener('mouseleave',()=>{
+      pathEl.setAttribute('fill-opacity',baseOpacity);
+      document.getElementById('tooltip').style.display='none';
+    });
+    g.addEventListener('click',()=>{ document.getElementById('tooltip').style.display='none'; showCanton(id); });
+    svg.appendChild(g);
+  });
+
+  svg.appendChild(mkEl('rect',{id:'pb-bg',x:10,y:387,width:580,height:8,fill:'rgba(255,255,255,0.35)',rx:4}));
+  svg.appendChild(mkEl('rect',{id:'progress-bar-fill',x:10,y:387,width:visited.size/26*580,height:8,fill:'#ffc107',rx:4}));
+}
+
+function renderFallbackMap() {
+  // Carte cercles (fallback si réseau indisponible)
+  const svg = document.getElementById('map');
+  svg.innerHTML = '';
+  const bg = document.createElementNS('http://www.w3.org/2000/svg','rect');
+  bg.setAttribute('width','600'); bg.setAttribute('height','400');
+  bg.setAttribute('fill','#e8f4f8'); bg.setAttribute('rx','8');
+  svg.appendChild(bg);
+  cantons.forEach(c => {
+    const pos = cantonPositions[c.id];
+    if (!pos) return;
+    const color = regionColors[c.region]||'#888';
+    const isDimmed = activeRegion!=='all' && c.region!==activeRegion;
+    const isVisited = visited.has(c.id);
+    const g = document.createElementNS('http://www.w3.org/2000/svg','g');
+    g.style.cursor='pointer';
+    const circle = document.createElementNS('http://www.w3.org/2000/svg','circle');
+    circle.setAttribute('cx',pos.x); circle.setAttribute('cy',pos.y); circle.setAttribute('r','18');
+    circle.setAttribute('fill',color); circle.setAttribute('opacity', isDimmed?'0.2':'1');
+    circle.setAttribute('stroke', isVisited?'#ffc107':'rgba(255,255,255,0.5)');
+    circle.setAttribute('stroke-width', isVisited?'3':'1.5');
+    g.appendChild(circle);
+    const text = document.createElementNS('http://www.w3.org/2000/svg','text');
+    text.setAttribute('x',pos.x); text.setAttribute('y',pos.y);
+    text.setAttribute('class','canton-label'); text.textContent=c.id;
+    g.appendChild(text);
+    g.addEventListener('click', ()=>{ showCanton(c.id); });
+    svg.appendChild(g);
+  });
+}
+
+// ───────── Region filter ─────────
+function filterRegion(region) {
+  activeRegion = region;
+  document.querySelectorAll('.region-btn').forEach(b => {
+    b.classList.toggle('active', b.getAttribute('data-region') === region);
+  });
+  renderMap();
+}
+
+// ───────── Canton detail ─────────
+let currentCanton = null;
+
+function showCanton(id) {
+  const c = cantons.find(x => x.id === id);
+  if (!c) return;
+  currentCanton = c;
+  // Mark visited
+  visited.add(id);
+  saveStorage('swissgeo_visited', Array.from(visited));
+  updateI18n();
+
+  const color = regionColors[c.region] || '#888';
+  const isFav = favs.has(id);
+
+  const foodItems = c.food.map(f =>
+    `<div class="item-card">
+      <div class="item-name">${f.name[lang]}</div>
+      <div class="item-zh">${lang==='fr' ? f.name.zh : f.name.fr}</div>
+      <div class="item-desc">${f.desc[lang]}</div>
+    </div>`).join('');
+
+  const tourismItems = c.tourism.map(f =>
+    `<div class="item-card">
+      <div class="item-name">${f.name[lang]}</div>
+      <div class="item-zh">${lang==='fr' ? f.name.zh : f.name.fr}</div>
+      <div class="item-desc">${f.desc[lang]}</div>
+    </div>`).join('');
+
+  const sportsItems = c.sports ? c.sports.map(f =>
+    `<div class="item-card">
+      <div class="item-name">${f.name[lang]}</div>
+      <div class="item-zh">${lang==='fr' ? f.name.zh : f.name.fr}</div>
+      <div class="item-desc">${f.desc[lang]}</div>
+    </div>`).join('') : '';
+
+  const shareUrl = window.location.href.split('?')[0] + '?canton=' + id;
+
+  document.getElementById('detail-content').innerHTML = `
+    <div class="detail-card fade-in">
+      <div class="detail-hero" style="background:${color}18">
+        <div class="detail-emoji">${c.emoji}</div>
+        <div class="detail-names">
+          <h2 style="color:${color}">${c.name[lang]}</h2>
+          <div class="zh-name">${lang==='fr' ? c.name.zh : c.name.fr}</div>
+          <span class="canton-id">${c.id}</span>
+        </div>
+        <div class="detail-fav" id="fav-btn" onclick="toggleFav('${id}')" title="${isFav ? t('rem_fav') : t('add_fav')}">${isFav ? '❤️' : '🤍'}</div>
+      </div>
+      <span class="region-tag" style="background:${color}">${regionNames[c.region][lang]}</span>
+      <div class="detail-section">
+        <h3>${t('capital')}</h3>
+        <p>${c.capital[lang]} ${lang==='fr' ? '('+c.capital.zh+')' : '('+c.capital.fr+')'}</p>
+      </div>
+      <div class="detail-section">
+        <h3>${t('language')}</h3>
+        <p>${c.language[lang]}</p>
+      </div>
+      <div class="detail-section">
+        <h3>${t('history')}</h3>
+        <p>${c.history[lang]}</p>
+      </div>
+      <div class="fun-fact">💡 <strong>${t('funfact')}</strong> ${c.funFact[lang]}</div>
+      <div class="detail-section">
+        <h3>${t('food')}</h3>
+        <div class="items-grid">${foodItems}</div>
+      </div>
+      <div class="detail-section">
+        <h3>${t('tourism')}</h3>
+        <div class="items-grid">${tourismItems}</div>
+      </div>
+      ${sportsItems ? `<div class="detail-section"><h3>${t('sports')}</h3><div class="items-grid">${sportsItems}</div></div>` : ''}
+      <div class="detail-section">
+        <h3>${t('water')}</h3>
+        <p>${c.water[lang]}</p>
+      </div>
+      <div class="detail-section" style="display:flex;gap:10px;flex-wrap:wrap">
+        <button onclick="shareOrCopy('${shareUrl}','${c.name.fr}')" style="background:#f0f0f0;border:none;padding:8px 16px;border-radius:20px;cursor:pointer;font-size:.85rem">🔗 ${lang==='fr'?'Partager':'分享'}</button>
+      </div>
+    </div>`;
+
+  showScreen('detail');
+}
+
+function shareOrCopy(url, name) {
+  if (navigator.share) {
+    navigator.share({title: 'SwissGeo — ' + name, url: url}).catch(()=>{});
+  } else {
+    try { navigator.clipboard.writeText(url); } catch(e) {}
+    alert(lang==='fr' ? 'Lien copié !' : '連結已複製！');
+  }
+}
+
+// ───────── Favorites ─────────
+function toggleFav(id) {
+  if (favs.has(id)) { favs.delete(id); }
+  else { favs.add(id); }
+  saveStorage('swissgeo_favs', Array.from(favs));
+  const isFav = favs.has(id);
+  const btn = document.getElementById('fav-btn');
+  if (btn) { btn.textContent = isFav ? '❤️' : '🤍'; btn.title = isFav ? t('rem_fav') : t('add_fav'); }
+  updateI18n();
+}
+
+// ───────── Glossary ─────────
+function renderGlossary() {
+  const q = (document.getElementById('glossary-search').value || '').toLowerCase();
+  const list = document.getElementById('glossary-list');
+  const items = glossary.filter(g => {
+    const term = (g.term.fr + g.term.zh + g.def.fr + g.def.zh).toLowerCase();
+    return !q || term.includes(q);
+  });
+  list.innerHTML = items.map(g => `
+    <div class="glossary-item">
+      <span class="gterm">${g.term[lang]}</span>
+      <span class="gterm-zh">${lang==='fr' ? g.term.zh : g.term.fr}</span>
+      <div class="gdef">${g.def[lang]}</div>
+    </div>`).join('');
+}
+
+// ───────── Regions ─────────
+function renderRegions() {
+  const cont = document.getElementById('regions-content');
+  cont.innerHTML = regionsData.map(r => {
+    const chips = r.cantons.map(id => {
+      const c = cantons.find(x => x.id === id);
+      return c ? `<span class="canton-chip" onclick="showCanton('${id}');return false;" style="cursor:pointer">${c.emoji} ${c.name[lang]}</span>` : '';
+    }).join('');
+    return `<div class="region-card" style="background:${r.color}">
+      <h2>${r.name[lang]}</h2>
+      <div class="rc-zh">${lang==='fr' ? r.name.zh : r.name.fr}</div>
+      <p>${r.desc[lang]}</p>
+      <div class="canton-chips">${chips}</div>
+    </div>`;
+  }).join('');
+}
+
+// ───────── Loading screen ─────────
+function showLoadingThenHome() {
+  const loading = document.getElementById('loading-screen');
+  if (loading) {
+    setTimeout(() => {
+      loading.style.opacity = '0';
+      loading.style.transition = 'opacity 0.4s';
+      setTimeout(() => { loading.style.display = 'none'; }, 400);
+    }, 1200);
+  }
+}
+
+// ───────── Init ─────────
+document.addEventListener('DOMContentLoaded', function() {
+  // Restore state from localStorage
+  visited = new Set(loadStorage('swissgeo_visited', []));
+  favs = new Set(loadStorage('swissgeo_favs', []));
+  updateI18n();
+  showLoadingThenHome();
+  // Check for canton param in URL
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('canton')) {
+    showCanton(params.get('canton'));
+  }
+});
+</script>
+
+<!-- LOADING SCREEN -->
+<div id="loading-screen" style="position:fixed;top:0;left:0;right:0;bottom:0;background:#d32f2f;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:999;color:#fff">
+  <div style="font-size:5rem;margin-bottom:16px">🇨🇭</div>
+  <div style="font-size:1.8rem;font-weight:800;letter-spacing:.05em">SwissGeo</div>
+  <div style="font-size:1rem;opacity:.8;margin-top:8px">探索瑞士 · Découvrir la Suisse</div>
+</div>
+
+</body>
+</html>
